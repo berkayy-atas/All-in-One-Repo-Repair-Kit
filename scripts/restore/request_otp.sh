@@ -20,6 +20,8 @@ echo "UNIQUE_KEY=$(echo "$JSON_BODY" | jq -r '.data.uniqueKey')" >> $GITHUB_ENV
 echo "CREATED_AT=$(echo "$JSON_BODY" | jq -r '.data.createdAt')" >> $GITHUB_ENV
 echo "EXPIRES_AT=$(echo "$JSON_BODY" | jq -r '.data.expiresAt')" >> $GITHUB_ENV
 
-# Generate OTP notification
 QUERY_PARAMS="createdAt=$CREATED_AT&expiresAt=$EXPIRES_AT&uniqueKey=$UNIQUE_KEY&source=FileDownload"
-echo "::notice ::Enter OTP at $MGMT_BASE_URL/git-security/?$QUERY_PARAMS"
+
+ENCODED_URL_QUERY=$(echo "$QUERY_PARAMS" | jq -sRr @uri)
+
+echo "::notice ::The OTP code has been sent to your email address. Please enter the OTP with the reference code $UNIQUE_KEY at $MGMT_BASE_URL/git-security/?$ENCODED_URL_QUERY"

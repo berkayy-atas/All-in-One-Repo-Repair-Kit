@@ -27,7 +27,7 @@ This GitHub Action provides a comprehensive solution for securely backing up and
 
 ---
 
-## 📦 Setup Guide
+# 📦 Setup Guide
 
 1. **Store your Activation Code** as a GitHub Secret  
    - Go to **Settings > Secrets > Actions** in your repository  
@@ -38,7 +38,10 @@ This GitHub Action provides a comprehensive solution for securely backing up and
    - Create a new secret named `ENCRYPTION_PASSWORD`  
    - Use a strong key of **at least 32 characters**
 
-3. **Add your workflow file**  
+
+## 🔄 Backup Workflow
+
+Add your workflow file 
    Create a file at `.github/workflows/backup.yml` and paste in the block below:
 
 ```yaml
