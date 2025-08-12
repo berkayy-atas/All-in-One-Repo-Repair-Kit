@@ -47,14 +47,14 @@ runs:
 
     - name: Run Shield Backup
       if: ${{ inputs.action_type == 'backup' }}
-      uses: ./shield
+      uses: ${{ github.action_path }/shield
       with:
         activation_code: ${{ inputs.activation_code }}
         encryption_password: ${{ inputs.encryption_password }}
         
     - name: Run Restore
       if: ${{ inputs.action_type == 'restore' }}
-      uses: ./restore
+      uses: ${{ github.action_path }/restore
       with:
         activation_code: ${{ inputs.activation_code }}
         encryption_password: ${{ inputs.encryption_password }}
