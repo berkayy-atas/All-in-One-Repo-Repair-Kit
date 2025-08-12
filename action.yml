@@ -32,6 +32,7 @@ inputs:
 runs:
   using: 'composite'
   steps:
+
     - name: Validate action type
       shell: bash
       run: |
@@ -39,7 +40,11 @@ runs:
           echo "::error ::Invalid action-type. Must be 'backup' or 'restore'"
           exit 1
         fi
-        
+
+    - name: Set execute permissions
+      shell: bash
+      run: chmod -R +x ./scripts
+
     - name: Run Shield Backup
       if: ${{ inputs.action-type == 'backup' }}
       uses: ./shield
