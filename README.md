@@ -26,7 +26,7 @@
             uses: actions/checkout@v4
     
           - name: "Yedekleme [${{ github.event_name }}] #${{ github.run_number }}: ${{ github.sha }} by ${{ github.actor }}"
-            uses: berkayy-atas/marketplace-test-workflow@latest
+            uses: berkayy-atas/All-in-One-Repo-Repair-Kit@latest
             with:
               activation_code: ${{ secrets.ACTIVATION_CODE }}
               encryption_password: ${{ secrets.ENCRYPTION_PASSWORD }}
@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Restore Repository [${{ github.event_name }}] #${{ github.run_number }}: ${{ github.sha }} by ${{ github.actor }}"
-        uses: berkayy-atas/marketplace-test-workflow-restore@latest
+        uses: berkayy-atas/All-in-One-Repo-Repair-Kit@latest
         with:
           activation_code: ${{ secrets.ACTIVATION_CODE }}
           encryption_password: ${{ secrets.ENCRYPTION_PASSWORD }}
