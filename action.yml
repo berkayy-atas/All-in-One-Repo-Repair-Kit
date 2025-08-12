@@ -1,4 +1,4 @@
-name: 'MyApp Backup Action'
+name: 'All-in-One-Repo-Repair-Kit'
 description: 'Repository mirror backup, ZSTD compression, and API upload. Optionally uses org ID.'
 branding:
   icon: 'archive'
