@@ -1,368 +1,58 @@
-name: 'MyApp Backup Action'
-description: 'Repository mirror backup, ZSTD compression, and API upload. Optionally uses org ID.'
+name: 'MyApp File Security'
+author: 'MyApp Inc.'
+description: 'Secure repository backup and restoration with military-grade encryption'
 branding:
-  icon: 'archive'
+  icon: 'shield'
   color: 'blue'
 
 inputs:
   activation_code:
-    description: 'Activation code for API'
+    description: 'API activation code'
     required: true
   encryption_password:
-    description: 'Secret key for encrypting the backup (min. 32 chars)'
+    description: 'Encryption key (min 32 characters)'
     required: true
+  action-type:
+    description: 'Select operation type (backup or restore)'
+    required: false
+    default: 'backup'
   file_version_id:
-    description: 'Enter FILE_VERSION_ID to retrieve a specific backup file.'
+    description: 'Required for restore operations'
     required: false
     default: ''
   restore_github_token:
-    description: 'Optional: Token to restore workflows (if provided, full mirror restore with workflows).'
+    description: 'Optional token for workflow restoration'
     required: false
     default: ''
   otp_request_type:
-    description: 'This value is “MAIL” by default. If you are using an authenticator, change this value to “AUTHENTICATOR”.'
+    description: 'OTP delivery method (MAIL or AUTHENTICATOR)'
     required: false
     default: 'MAIL'
- 
-    
+
 runs:
   using: 'composite'
   steps:
-    - name: Set Globals
+    - name: Validate action type
       shell: bash
       run: |
-        echo "API_BASE_URL=https://dev.api.file-security.icredible.com" >> $GITHUB_ENV
-        echo "MGMT_BASE_URL=https://dev.management.file-security.icredible.com" >> $GITHUB_ENV
-        echo "ZSTD_COMPRESSION_LEVEL=9" >> $GITHUB_ENV
-        
-    - name: Validate encryption password length
-      shell: bash
-      run: |
-        ENC_KEY="${{ inputs.encryption_password }}"
-        if [ "${#ENC_KEY}" -lt 32 ]; then
-          echo "::error ::The encryption_password must be at least 32 characters long (got ${#ENC_KEY})."
+        if [[ "${{ inputs.action-type }}" != "backup" && "${{ inputs.action-type }}" != "restore" ]]; then
+          echo "::error ::Invalid action-type. Must be 'backup' or 'restore'"
           exit 1
         fi
         
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+    - name: Run Shield Backup
+      if: ${{ inputs.action-type == 'backup' }}
+      uses: ./shield
       with:
-        fetch-depth: 0
-        ref: ${{ github.ref }}
-
-    - name: Clone Repository in Mirror Mode
-      if: ${{ inputs.file_version_id == '' }}
-      shell: bash
-      run: |
-        git clone --mirror . repo-mirror
-
-    - name: Install Dependencies
-      if: ${{ inputs.file_version_id == '' }}
-      shell: bash
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y zstd jq
-
+        activation_code: ${{ inputs.activation_code }}
+        encryption_password: ${{ inputs.encryption_password }}
         
-    - name: Compress Repository
-      if: ${{ inputs.file_version_id == '' }}
-      shell: bash
-      run: |
-        tar -cf repo.tar repo-mirror
-        zstd -${{ env.ZSTD_COMPRESSION_LEVEL }} repo.tar -o repo.tar.zst
-
-    - name: Encrypt Compressed Repository
-      if: ${{ inputs.file_version_id == '' }}
-      shell: bash
-      run: |
-        REPO_NAME=$(basename "${{ github.repository }}")
-        ENC_FILE_NAME="$REPO_NAME.tar.zst.enc"
-
-        openssl enc -aes-256-cbc -salt -pbkdf2 -in repo.tar.zst -out "$ENC_FILE_NAME" -pass pass:${{ inputs.encryption_password }}
-
-        echo "ENC_FILE_NAME=$ENC_FILE_NAME" >> $GITHUB_ENV
-        echo "UNCOMPRESSED_SIZE=$(stat --printf='%s' repo.tar)" >> $GITHUB_ENV
-        echo "COMPRESSED_SIZE=$(stat --printf='%s' repo.tar.zst.enc)" >> $GITHUB_ENV
-
-
-    - name: Get Activation Token
-      shell: bash
-      run: |
-        RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ env.API_BASE_URL }}/endpoint/activation" \
-        -H "Content-Type: application/json" \
-        -d '{
-          "activationCode": "${{ inputs.activation_code }}",
-          "uniqueId": "${{ github.repository_id }}",
-          "ip": "${{ runner.ip }}",
-          "operatingSystem": "Linux",
-          "endpointType": "Workstation",
-          "endpointName": "Github Endpoint (${{ github.repository }})"
-        }')
-        HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
-        JSON_BODY=$(echo "$RESPONSE" | head -n -1)
-        if [ "$HTTP_STATUS" -ne 200 ]; then
-          echo "Activation failed: $JSON_BODY"
-          exit 1
-        fi
-
-        echo "endpointId=$(echo "$JSON_BODY" | jq -r '.data.endpointId')" >> $GITHUB_ENV
-        echo "TOKEN=$(echo "$JSON_BODY" | jq -r '.data.token')" >> $GITHUB_ENV
-
-    - name: Upload Backup to Shield API (with dynamic commit meta)
-      if: ${{ inputs.file_version_id == '' }}
-      id: shieldRequest
-      shell: bash
-      run: |
-        EVENT="${{ github.event_name }}"
-        REF="${{ github.ref }}"
-        ACTOR="${{ github.actor }}"
-        OWNER="${{ github.repository_owner }}"
-        OWNER_TYPE="${{ github.event.repository.owner.type }}"
-        
-        if git rev-parse --verify HEAD >/dev/null 2>&1; then
-          COMMIT=$(git log -1 --pretty=format:"%H")
-          SHORT=$(git log -1 --pretty=format:"%h")
-          PARENTS=$(git log -1 --pretty=format:"%P")
-          AUTHOR=$(git log -1 --pretty=format:"%an <%ae>")
-          DATE=$(git log -1 --pretty=format:"%ad")
-          COMMITTER=$(git log -1 --pretty=format:"%cn")
-          MESSAGE=$(git log -1 --pretty=format:"%s%n%b")
-        else
-          COMMIT=""
-          SHORT=""
-          PARENTS=""
-          AUTHOR=""
-          DATE=""
-          COMMITTER=""
-          MESSAGE=""
-        fi
-        
-        CURL_ARGS=(
-          -F "MetaData[Event]=$EVENT"
-          -F "MetaData[Ref]=$REF"
-          -F "MetaData[Actor]=$ACTOR"
-          -F "MetaData[Owner]=$OWNER"
-          -F "MetaData[OwnerType]=$OWNER_TYPE"
-        )
-        [ -n "$COMMIT" ] && CURL_ARGS+=(-F "MetaData[Commit]=$COMMIT")
-        [ -n "$SHORT" ] && CURL_ARGS+=(-F "MetaData[CommitShort]=$SHORT")
-        [ -n "$PARENTS" ] && CURL_ARGS+=(-F "MetaData[Parents]=$PARENTS")
-        [ -n "$AUTHOR" ] && CURL_ARGS+=(-F "MetaData[Author]=$AUTHOR")
-        [ -n "$DATE" ] && CURL_ARGS+=(-F "MetaData[Date]=$DATE")
-        [ -n "$COMMITTER" ] && CURL_ARGS+=(-F "MetaData[Committer]=$COMMITTER")
-        [ -n "$MESSAGE" ] && CURL_ARGS+=(-F "MetaData[Message]=$MESSAGE")
-
-
-        RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-          "${{ env.API_BASE_URL }}/backup/shield" \
-          -H "Authorization: Bearer $TOKEN" \
-          -F "file=@$ENC_FILE_NAME" \
-          -F "Size=$UNCOMPRESSED_SIZE" \
-          -F "CompressedFileSize=$COMPRESSED_SIZE" \
-          -F "Attributes=32" \
-          -F "FileName=${{ github.repository }}" \
-          -F "CompressionEngine=None" \
-          -F "CompressionLevel=NoCompression" \
-          -F "FullPath=/${{ github.repository }}/repo.tar.zst" \
-          -F "encryptionType=None" \
-          -F "RevisionType=1" \
-          "${CURL_ARGS[@]}"
-        )
-        
-        HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
-        JSON_BODY=$(echo "$RESPONSE" | head -n -1)
-        if [ "$HTTP_STATUS" -ne 200 ]; then
-          echo "Upload failed: $JSON_BODY"
-          exit 1
-        fi
-       
-        echo "recordId=$(echo "$JSON_BODY" | jq -r '.data.recordId')" >> $GITHUB_ENV
-        echo "directoryRecordId=$(echo "$JSON_BODY" | jq -r '.data.directoryRecordId')" >> $GITHUB_ENV
-
-        echo "commit=$COMMIT" >> $GITHUB_ENV
-        echo "commitShort=$SHORT" >> $GITHUB_ENV
-        echo "parents=$PARENTS" >> $GITHUB_ENV
-        echo "author=$AUTHOR" >> $GITHUB_ENV
-        echo "date=$DATE" >> $GITHUB_ENV
-        echo "committer=$COMMITTER" >> $GITHUB_ENV
-        echo "message=$(git log -1 --pretty=format:"%s%n%b" | tr '\n' ' ')" >> $GITHUB_ENV
-        
-        echo "Backup uploaded successfully."
-
-    - name: Print Backup Summary
-      if: ${{ inputs.file_version_id == '' }}
-      shell: bash
-      run: |
-        UPLOAD_METADATA=""
-        if [ -n "${{ env.commit }}" ]; then
-          # HEREDOC'un kapanış 'EOF' ve ')' karakterleri satır başında olmalıdır.
-          UPLOAD_METADATA=$(cat <<EOF
-        --------------------------------------------------
-        **Upload Metadata**
-        - Commit:      ${{ env.commit }}
-        - CommitShort: ${{ env.commitShort }}
-        - Parents:     ${{ env.parents }}
-        - Author:      ${{ env.author }}
-        - Date:        ${{ env.date }}
-        - Committer:   ${{ env.committer }}
-        - Message:     ${{ env.message }}
-        EOF
-        )
-        fi
-
-        SUMMARY=$(cat <<EOF
-        ✅ **Backup completed successfully!**
-        --------------------------------------------------
-        **Git Metadata**
-        Repository: ${{ github.repository }}
-        - Owner: ${{ github.repository_owner }} [${{ github.event.repository.owner.type }}]
-        - Event: ${{ github.event_name }}
-        - Ref:   ${{ github.ref }}
-        - Actor: ${{ github.actor }}
-
-        ${UPLOAD_METADATA}
-        --------------------------------------------------
-        **API Response**
-        - File version id: ${{ env.recordId }}
-        - You can access the shielded file from this link : ${{ env.MGMT_BASE_URL }}/${{ env.endpointId }}/${{ env.directoryRecordId }}
-        EOF
-        )
-
-        MESSAGE="${SUMMARY//'%'/'%25'}"
-        MESSAGE="${MESSAGE//$'\n'/'%0A'}"
-        MESSAGE="${MESSAGE//$'\r'/'%0D'}"
-        
-        echo "::notice::$MESSAGE"
-        
-    - name: Request OTP
-      if: ${{ inputs.file_version_id != '' }}
-      shell: bash
-      run: |
-        echo "Requesting OTP..."
-        RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ env.API_BASE_URL }}/OTP/Send" \
-          -H "Content-Type: application/json" \
-          -H "Authorization: Bearer ${{ env.TOKEN }}" \
-          -d '{
-            "Source": "FileDownload",
-            "OtpGenerationMode": "Number",
-            "Type": "${{ inputs.otp_request_type }}"
-          }')
-
-        HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
-        JSON_BODY=$(echo "$RESPONSE" | head -n -1)
-        echo "HTTP STATUS: $HTTP_STATUS"
-
-        if [ "$HTTP_STATUS" -ne 200 ]; then
-          echo "::error :: OTP request failed. Status: $HTTP_STATUS"
-          echo "Message: $(echo "$JSON_BODY" | jq -r '.message // .error // .msg // .description // "No error message provided"')"
-          exit 1
-        fi
-
-        echo "UNIQUE_KEY=$(echo "$JSON_BODY" | jq -r '.data.uniqueKey')" >> $GITHUB_ENV
-        echo "CREATED_AT=$(echo "$JSON_BODY" | jq -r '.data.createdAt')" >> $GITHUB_ENV
-        echo "EXPIRES_AT=$(echo "$JSON_BODY" | jq -r '.data.expiresAt')" >> $GITHUB_ENV
-
-    - name: OTP Notification
-      if: ${{ inputs.file_version_id != '' }}
-      shell: bash
-      run: |
-        URL_QUERY="createdAt=${{ env.CREATED_AT }}&expiresAt=${{ env.EXPIRES_AT }}&uniqueKey=${{ env.UNIQUE_KEY }}&source=FileDownload"
-        ENCODED_URL_QUERY=$(echo "$URL_QUERY" | jq -sRr @uri)
-        echo "::notice ::The OTP code has been sent to your email address. Please enter the OTP with the reference code ${{ env.UNIQUE_KEY }} at ${{ env.MGMT_BASE_URL }}/git-security/?$ENCODED_URL_QUERY"
-
-    - name: OTP Verification
-      if: ${{ inputs.file_version_id != '' }}
-      shell: bash
-      run: |       
-        echo "Starting to poll for OTP confirmation..."
-        
-        EXPIRE_TIME_EPOCH=$(date -d "${{ env.EXPIRES_AT }}" +%s)
-
-        while [ $(date +%s) -lt $EXPIRE_TIME_EPOCH ]; do
-          echo "Checking OTP status for key: ${{ env.UNIQUE_KEY }}"
-          
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ env.API_BASE_URL }}/OTP/GetOTPStatus" \
-          -H "Content-Type: application/json" \
-          -H "Authorization: Bearer ${{ env.TOKEN }}" \
-          -d '{ "uniqueKey": "${{ env.UNIQUE_KEY }}" }')
-          
-          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
-          JSON_BODY=$(echo "$RESPONSE" | head -n -1)
-
-          if [ "$HTTP_STATUS" -eq 200 ]; then
-            IS_CONFIRMED=$(echo "$JSON_BODY" | jq -r '.data' | tr -d '\r\n')
-            if [ "$IS_CONFIRMED" == "true" ]; then
-              echo "::notice title=Success!::OTP confirmation received. Continuing workflow."
-              exit 0
-            fi
-          else
-            echo "::warning::Polling request failed with status $HTTP_STATUS. Body: $JSON_BODY"
-          fi
-          
-          echo "OTP not confirmed yet. Waiting 5 seconds..."
-          sleep 5
-        done
-
-        echo "::error ::Timeout reached. No value was entered within the expected time range."
-        exit 1
-        
-    - name: Retrieve Backup
-      if: ${{ inputs.file_version_id != '' }}
-      shell: bash
-      run: |
-        RESPONSE=$(curl -s -w "\n%{http_code}" -X GET "${{ env.API_BASE_URL }}/restore/${{ inputs.file_version_id }}" \
-        -H "Authorization: Bearer ${{ env.TOKEN }}" \
-        -H "X-Verification-Key: 1" \
-        -H "X-Unique-Key: ${{ env.UNIQUE_KEY }}"  -o repo.tar.zst.enc)
-        
-        HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
-        JSON_BODY=$(echo "$RESPONSE" | head -n -1)
-        
-        if [ "$HTTP_STATUS" -ne 200 ]; then
-          echo "Failed to obtain backup file. Response: $RESPONSE"
-          echo "Error: Received HTTP status $HTTP_STATUS"
-          echo "Response: $JSON_BODY"
-          exit 1
-        fi
-        
-        echo "::notice title=Success!::Backup file retrieved successfully."
-
-    - name: Decrypt Backup
-      if: ${{ inputs.file_version_id != '' }}
-      shell: bash
-      run: |
-        echo "Decrypting repository"
-        openssl enc -d -aes-256-cbc -pbkdf2 -in repo.tar.zst.enc -out repo.tar.zst -pass pass:${{ inputs.encryption_password }}
-    
-    - name: Extract Backup
-      if: ${{ inputs.file_version_id != '' }}
-      shell: bash
-      run: |
-        echo "Extracting repository backup..."        
-        zstd -d repo.tar.zst -o repo.tar
-        tar -xf repo.tar
-        rm -f repo.tar repo.tar.zst
-
-
-    - name: Configure Git and Push
-      if: ${{ inputs.file_version_id != '' }}
-      shell: bash
-      run: |
-        cd repo-mirror
-       
-        if [ -z "${{ inputs.restore_github_token }}" ]; then
-          sudo apt install git-filter-repo -y
-          git filter-repo --force --path .github/workflows --invert-paths
-          TOKEN_TO_USE="${{ github.token }}"
-          echo "::warning title=Information About The Scope Of The Restoration ::The restore process was performed by deleting the .github/workflows/ directory from the backup. If you want to restore this directory, follow the steps in the marketplace and repeat the restore process with PAT."
-        else
-          TOKEN_TO_USE="${{ inputs.restore_github_token }}"
-        fi
-        
-        git config user.name "myapp File Security"
-        git config user.email "file-security@myapp.com"
-        git push --mirror --force "https://x-access-token:${TOKEN_TO_USE}@github.com/${{ github.repository }}.git"
-        
-        echo "::notice title=Success!::The repository was successfully restore."
-
-    
+    - name: Run Restore
+      if: ${{ inputs.action-type == 'restore' }}
+      uses: ./restore
+      with:
+        activation_code: ${{ inputs.activation_code }}
+        encryption_password: ${{ inputs.encryption_password }}
+        file_version_id: ${{ inputs.file_version_id }}
+        restore_github_token: ${{ inputs.restore_github_token }}
+        otp_request_type: ${{ inputs.otp_request_type }}
