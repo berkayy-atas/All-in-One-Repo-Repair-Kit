@@ -17,11 +17,11 @@ runs:
   steps:
     - name: Set global variables
       shell: bash
-      run: ../scripts/common/set_globals.sh
+      run: ${{ github.action_path }}/scripts/common/set_globals.sh
 
     - name: Validate encryption password
       shell: bash
-      run: ../scripts/common/validate_password.sh
+      run: ${{ github.action_path }}/scripts/common/validate_password.sh
       env:
         ENCRYPTION_PASSWORD: ${{ inputs.encryption_password }}
 
@@ -33,32 +33,32 @@ runs:
 
     - name: Create mirror clone
       shell: bash
-      run: ../scripts/shield/mirror_clone.sh
+      run: ${{ github.action_path }}/scripts/shield/mirror_clone.sh
 
     - name: Install dependencies
       shell: bash
-      run: ../scripts/shield/install_deps.sh
+      run: ${{ github.action_path }}/scripts/shield/install_deps.sh
 
     - name: Compress repository
       shell: bash
-      run: ../scripts/shield/compress_repo.sh
+      run: ${{ github.action_path }}/scripts/shield/compress_repo.sh
       
     - name: Encrypt repository
       shell: bash
-      run: ../scripts/shield/encrypt_repo.sh
+      run: ${{ github.action_path }}/scripts/shield/encrypt_repo.sh
       env:
         ENCRYPTION_PASSWORD: ${{ inputs.encryption_password }}
         
     - name: Get activation token
       shell: bash
-      run: ../scripts/common/get_token.sh
+      run: ${{ github.action_path }}/scripts/common/get_token.sh
       env:
         ACTIVATION_CODE: ${{ inputs.activation_code }}
 
     - name: Upload backup
       shell: bash
-      run: ../scripts/shield/upload_backup.sh
+      run: ${{ github.action_path }}/scripts/shield/upload_backup.sh
 
     - name: Print summary
       shell: bash
-      run: ../scripts/shield/print_summary.sh
+      run: ${{ github.action_path }}/scripts/shield/print_summary.sh

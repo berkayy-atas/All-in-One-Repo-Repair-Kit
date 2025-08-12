@@ -11,7 +11,7 @@ Actor: $GITHUB_ACTOR
 ---
 **API Response**
 File version id: $recordId
-Access shielded file: $MGMT_BASE_URL/$endpointId/$directoryRecordId
+Access shielded file: $MGMT_BASE_URL/dashboard/file-management/$endpointId/$directoryRecordId
 EOF
 )
 
