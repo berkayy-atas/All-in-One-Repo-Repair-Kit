@@ -29,11 +29,11 @@ runs:
 
     - name: Set global variables
       shell: bash
-      run: ../scripts/common/set_globals.sh
+      run: ${{ github.action_path }}/scripts/common/set_globals.sh
 
     - name: Validate password
       shell: bash
-      run: ../scripts/common/validate_password.sh
+      run: ${{ github.action_path }}/scripts/common/validate_password.sh
       env:
         ENCRYPTION_PASSWORD: ${{ inputs.encryption_password }}
 
@@ -44,38 +44,38 @@ runs:
 
     - name: Get activation token
       shell: bash
-      run: ../scripts/common/get_token.sh
+      run: ${{ github.action_path }}/scripts/common/get_token.sh
       env:
         ACTIVATION_CODE: ${{ inputs.activation_code }}
 
     - name: Request OTP
       shell: bash
-      run: ../scripts/restore/request_otp.sh
+      run: ${{ github.action_path }}/scripts/restore/request_otp.sh
       env:
         OTP_TYPE: ${{ inputs.otp_request_type }}
 
     - name: Verify OTP
       shell: bash
-      run: ../scripts/restore/verify_otp.sh
+      run: ${{ github.action_path }}/scripts/restore/verify_otp.sh
 
     - name: Retrieve backup
       shell: bash
-      run: ../scripts/restore/retrieve_backup.sh
+      run: ${{ github.action_path }}/scripts/restore/retrieve_backup.sh
       env:
         FILE_VERSION_ID: ${{ inputs.file_version_id }}
 
     - name: Decrypt backup
       shell: bash
-      run: ../scripts/restore/decrypt_backup.sh
+      run: ${{ github.action_path }}/scripts/restore/decrypt_backup.sh
       env:
         ENCRYPTION_PASSWORD: ${{ inputs.encryption_password }}
         
     - name: Extract backup
       shell: bash
-      run: ../scripts/restore/extract_backup.sh
+      run: ${{ github.action_path }}/scripts/restore/extract_backup.sh
 
     - name: Configure and push
       shell: bash
-      run: ../scripts/restore/configure_push.sh
+      run: ${{ github.action_path }}/scripts/restore/configure_push.sh
       env:
         RESTORE_TOKEN: ${{ inputs.restore_github_token }}
