@@ -33,11 +33,15 @@ runs:
   using: 'composite'
   steps:
 
-    - name: Validate action type
+    - name: Validate inputs
       shell: bash
       run: |
         if [[ "${{ inputs.action_type }}" != "backup" && "${{ inputs.action_type }}" != "restore" ]]; then
           echo "::error ::Invalid action_type. Must be 'backup' or 'restore'"
+          exit 1
+        fi
+        if [[ "${{ inputs.otp_request_type }}" != "MAIL" && "${{ inputs.otp_request_type }}" != "AUTHENTICATOR" ]]; then
+          echo "::error ::Invalid otp_request_type. Must be 'MAIL' or 'AUTHENTICATOR'"
           exit 1
         fi
 
@@ -47,14 +51,14 @@ runs:
 
     - name: Run Shield Backup
       if: ${{ inputs.action_type == 'backup' }}
-      uses: ${{ github.action_path }}/shield
+      uses: shield/
       with:
         activation_code: ${{ inputs.activation_code }}
         encryption_password: ${{ inputs.encryption_password }}
         
     - name: Run Restore
       if: ${{ inputs.action_type == 'restore' }}
-      uses: ${{ github.action_path }}/restore
+      uses: restore/
       with:
         activation_code: ${{ inputs.activation_code }}
         encryption_password: ${{ inputs.encryption_password }}
