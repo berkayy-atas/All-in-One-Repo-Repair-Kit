@@ -43,7 +43,7 @@ runs:
 
     - name: Set execute permissions
       shell: bash
-      run: chmod -R +x ./scripts
+      run: chmod -R +x ${{ github.action_path }}/scripts
 
     - name: Run Shield Backup
       if: ${{ inputs.action-type == 'backup' }}
