@@ -32,18 +32,16 @@ inputs:
 runs:
   using: 'composite'
   steps:
-
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ github.ref }}
         
     - name: Validate action type
       shell: bash
       run: |
-        if [[ "${{ inputs.action-type }}" != "backup" && "${{ inputs.action-type }}" != "restore" ]]; then
-          echo "::error ::Invalid action-type. Must be 'backup' or 'restore'"
+        if [[ "${{ inputs.action_type }}" != "backup" && "${{ inputs.action_type }}" != "restore" ]]; then
+          echo "::error ::Invalid action_type. Must be 'backup' or 'restore'"
+          exit 1
+        fi
+        if [[ "${{ inputs.otp_request_typee }}" != "MAIL" && "${{ inputs.action-type }}" != "AUTHENTICATOR" ]]; then
+          echo "::error ::Invalid otp_request_type. Must be 'MAIL' or 'AUTHENTICATOR'"
           exit 1
         fi
 
@@ -52,15 +50,15 @@ runs:
       run: chmod -R +x ${{ github.action_path }}/scripts
 
     - name: Run Shield Backup
-      if: ${{ inputs.action-type == 'backup' }}
-      uses: ./shield/action.yml
+      if: ${{ inputs.action_type == 'backup' }}
+      uses: ${{ github.action_path }}/shield/
       with:
         activation_code: ${{ inputs.activation_code }}
         encryption_password: ${{ inputs.encryption_password }}
         
     - name: Run Restore
-      if: ${{ inputs.action-type == 'restore' }}
-      uses: ./restore/action.yml
+      if: ${{ inputs.action_type == 'restore' }}
+      uses: ${{ github.action_path }}/restore/
       with:
         activation_code: ${{ inputs.activation_code }}
         encryption_password: ${{ inputs.encryption_password }}
