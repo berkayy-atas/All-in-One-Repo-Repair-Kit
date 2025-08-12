@@ -40,12 +40,10 @@ runs:
       run: ../scripts/shield/install_deps.sh
 
     - name: Compress repository
-      if: ${{ inputs.file_version_id == '' }}
       shell: bash
       run: ../scripts/shield/compress_repo.sh
       
     - name: Encrypt repository
-      if: ${{ inputs.file_version_id == '' }}
       shell: bash
       run: ../scripts/shield/encrypt_repo.sh
       env:

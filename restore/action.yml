@@ -65,14 +65,12 @@ runs:
         FILE_VERSION_ID: ${{ inputs.file_version_id }}
 
     - name: Decrypt backup
-      if: ${{ inputs.file_version_id != '' }}
       shell: bash
       run: ../scripts/restore/decrypt_backup.sh
       env:
         ENCRYPTION_PASSWORD: ${{ inputs.encryption_password }}
         
     - name: Extract backup
-      if: ${{ inputs.file_version_id != '' }}
       shell: bash
       run: ../scripts/restore/extract_backup.sh
 
