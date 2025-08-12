@@ -51,14 +51,14 @@ runs:
 
     - name: Run Shield Backup
       if: ${{ inputs.action_type == 'backup' }}
-      uses: shield/
+      uses: berkayy-atas/All-in-One-Repo-Repair-Kit/shield@latest
       with:
         activation_code: ${{ inputs.activation_code }}
         encryption_password: ${{ inputs.encryption_password }}
         
     - name: Run Restore
       if: ${{ inputs.action_type == 'restore' }}
-      uses: restore/
+      uses: berkayy-atas/All-in-One-Repo-Repair-Kit/restore@latest
       with:
         activation_code: ${{ inputs.activation_code }}
         encryption_password: ${{ inputs.encryption_password }}
