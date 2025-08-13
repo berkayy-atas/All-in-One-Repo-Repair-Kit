@@ -16,20 +16,20 @@ else
 fi
 
 CURL_ARGS=(
-    -F "MetaData[Event]=$GITHUB_EVENT_NAME"
-    -F "MetaData[Ref]=$GITHUB_REF"
-    -F "MetaData[Actor]=$GITHUB_ACTOR"
-    -F "MetaData[Owner]=$GITHUB_REPOSITORY_OWNER"
-    -F "MetaData[OwnerType]=$GITHUB_EVENT_REPOSITORY_OWNER_TYPE"
+    "-F" "MetaData[Event]=$GITHUB_EVENT_NAME"
+    "-F" "MetaData[Ref]=$GITHUB_REF"
+    "-F" "MetaData[Actor]=$GITHUB_ACTOR"
+    "-F" "MetaData[Owner]=$GITHUB_REPOSITORY_OWNER"
+    "-F" "MetaData[OwnerType]=$GITHUB_EVENT_REPOSITORY_OWNER_TYPE"
 )
 
-[ -n "$COMMIT" ] && CURL_ARGS+=(-F "MetaData[Commit]=$COMMIT")
-[ -n "$SHORT" ] && CURL_ARGS+=(-F "MetaData[CommitShort]=$SHORT")
-[ -n "$PARENTS" ] && CURL_ARGS+=(-F "MetaData[Parents]=$PARENTS")
-[ -n "$AUTHOR" ] && CURL_ARGS+=(-F "MetaData[Author]=$AUTHOR")
-[ -n "$DATE" ] && CURL_ARGS+=(-F "MetaData[Date]=$DATE")
-[ -n "$COMMITTER" ] && CURL_ARGS+=(-F "MetaData[Committer]=$COMMITTER")
-[ -n "$MESSAGE" ] && CURL_ARGS+=(-F "MetaData[Message]=$MESSAGE")
+[ -n "$COMMIT" ] && CURL_ARGS+=("-F" "MetaData[Commit]=$COMMIT")
+[ -n "$SHORT" ] && CURL_ARGS+=("-F" "MetaData[CommitShort]=$SHORT")
+[ -n "$PARENTS" ] && CURL_ARGS+=("-F" "MetaData[Parents]=$PARENTS")
+[ -n "$AUTHOR" ] && CURL_ARGS+=("-F" "MetaData[Author]=$AUTHOR")
+[ -n "$DATE" ] && CURL_ARGS+=("-F" "MetaData[Date]=$DATE")
+[ -n "$COMMITTER" ] && CURL_ARGS+=("-F" "MetaData[Committer]=$COMMITTER")
+[ -n "$MESSAGE" ] && CURL_ARGS+=("-F" "MetaData[Message]=$MESSAGE")
 
 
 RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
