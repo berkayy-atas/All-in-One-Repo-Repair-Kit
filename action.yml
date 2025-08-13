@@ -135,6 +135,7 @@ runs:
         
         git config user.name "myapp File Security"
         git config user.email "file-security@myapp.com"
+        ls -la
         git push --mirror --force "https://x-access-token:${TOKEN_TO_USE}@github.com/${{ github.repository }}.git"
         
         echo "::notice title=Success!::The repository was successfully restore."
