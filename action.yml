@@ -33,7 +33,7 @@ runs:
   using: 'composite'
   steps:
 
-   - name: Set Action Path as ENV
+    - name: Set Action Path as ENV
       shell: bash
       run: echo "actionPath=${{ github.action_path }}" >> $GITHUB_ENV
         
