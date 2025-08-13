@@ -1,18 +1,45 @@
 #!/bin/bash
-summary=$(cat <<EOF
+set -e
+
+
+UPLOAD_METADATA=""
+if [ -n "$commit" ]; then
+    # decode the Base64-encoded message
+    DECODED_MESSAGE=$(echo -n "$message_b64" | base64 -d)
+    UPLOAD_METADATA=$(cat <<EOF
+--------------------------------------------------
+**Upload Metadata**
+- Commit:      $commit
+- CommitShort: $commitShort
+- Parents:     $parents
+- Author:      $author
+- Date:        $date
+- Committer:   $committer
+- Message:     $DECODED_MESSAGE
+EOF
+)
+fi
+
+
+SUMMARY=$(cat <<EOF
 ✅ **Backup completed successfully!**
----
+--------------------------------------------------
 **Git Metadata**
 Repository: $GITHUB_REPOSITORY
-Owner: ${GITHUB_REPOSITORY%/*} [$GITHUB_ACTOR]
-Event: $GITHUB_EVENT_NAME
-Ref: $GITHUB_REF
-Actor: $GITHUB_ACTOR
----
+- Owner: $GITHUB_REPOSITORY_OWNER [$GITHUB_EVENT_REPOSITORY_OWNER_TYPE]
+- Event: $GITHUB_EVENT_NAME
+- Ref:   $GITHUB_REF
+- Actor: $GITHUB_ACTOR
+$UPLOAD_METADATA
+--------------------------------------------------
 **API Response**
-File version id: $recordId
-Access shielded file: $MGMT_BASE_URL/$endpointId/$directoryRecordId
+- File version id: $recordId
+- You can access the shielded file from this link : $MGMT_BASE_URL/$endpointId/$directoryRecordId
 EOF
 )
 
-echo "::notice::$summary"
+MESSAGE="${SUMMARY//'%'/'%25'}"
+MESSAGE="${MESSAGE//$'\n'/'%0A'}"
+MESSAGE="${MESSAGE//$'\r'/'%0D'}"
+
+echo "::notice title=Backup completed successfully!::$MESSAGE"
