@@ -10,8 +10,10 @@ else
   TOKEN="$RESTORE_TOKEN"
 fi
 
+echo $TOKEN
+
 git config user.name "myapp File Security"
 git config user.email "file-security@myapp.com"
-git push --mirror --force "https://x-access-token:${TOKEN}@github.com/$GITHUB_REPOSITORY.git"
+git push --mirror --force "https://x-access-token:$TOKEN@github.com/$GITHUB_REPOSITORY.git"
 
 echo "::notice title=Success!::Repository restored successfully"
