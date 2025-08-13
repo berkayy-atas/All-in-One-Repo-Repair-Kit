@@ -16,9 +16,13 @@ if [ "$HTTP_STATUS" -ne 200 ]; then
   exit 1
 fi
 
-echo "UNIQUE_KEY=$(echo "$JSON_BODY" | jq -r '.data.uniqueKey')" >> $GITHUB_ENV
-echo "CREATED_AT=$(echo "$JSON_BODY" | jq -r '.data.createdAt')" >> $GITHUB_ENV
-echo "EXPIRES_AT=$(echo "$JSON_BODY" | jq -r '.data.expiresAt')" >> $GITHUB_ENV
+UNIQUE_KEY=$(echo "$JSON_BODY" | jq -r '.data.uniqueKey')
+CREATED_AT=$(echo "$JSON_BODY" | jq -r '.data.createdAt')
+EXPIRES_AT=$(echo "$JSON_BODY" | jq -r '.data.expiresAt')
+
+echo "UNIQUE_KEY=$UNIQUE_KEY" >> "$GITHUB_ENV"
+echo "CREATED_AT=$CREATED_AT" >> "$GITHUB_ENV"
+echo "EXPIRES_AT=$EXPIRES_AT" >> "$GITHUB_ENV"
 
 QUERY_PARAMS="createdAt=$CREATED_AT&expiresAt=$EXPIRES_AT&uniqueKey=$UNIQUE_KEY&source=FileDownload"
 
