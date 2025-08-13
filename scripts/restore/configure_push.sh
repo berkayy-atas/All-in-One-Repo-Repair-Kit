@@ -1,6 +1,9 @@
 #!/bin/bash
 cd repo-mirror
 
+git fetch origin
+git reset --hard origin/main
+
 if [ -z "$RESTORE_TOKEN" ]; then
   sudo apt-get install -y git-filter-repo
   git filter-repo --force --path .github/workflows --invert-paths
@@ -14,6 +17,6 @@ echo "$RESTORE_TOKEN"
 
 git config user.name "myapp File Security"
 git config user.email "file-security@myapp.com"
-git push --mirror --force "https://x-access-token:${TOKEN_TO_USE}@github.com/$GITHUB_REPOSITORY.git"
+git push --mirror --force-with-lease "https://x-access-token:${TOKEN_TO_USE}@github.com/$GITHUB_REPOSITORY.git"
 
 echo "::notice title=Success!::Repository restored successfully"
