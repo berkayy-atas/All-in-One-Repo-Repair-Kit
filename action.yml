@@ -32,6 +32,10 @@ inputs:
 runs:
   using: 'composite'
   steps:
+
+   - name: Set Action Path as ENV
+      shell: bash
+      run: echo "actionPath=${{ github.action_path }}" >> $GITHUB_ENV
         
     - name: Validate action type
       shell: bash
@@ -40,7 +44,7 @@ runs:
           echo "::error ::Invalid action_type. Must be 'backup' or 'restore'"
           exit 1
         fi
-        if [[ "${{ inputs.otp_request_type }}" != "MAIL" && "${{ inputs.action-type }}" != "AUTHENTICATOR" ]]; then
+        if [[ "${{ inputs.otp_request_type }}" != "MAIL" && "${{ inputs.otp_request_type }}" != "AUTHENTICATOR" ]]; then
           echo "::error ::Invalid otp_request_type. Must be 'MAIL' or 'AUTHENTICATOR'"
           exit 1
         fi
@@ -51,14 +55,14 @@ runs:
 
     - name: Run Shield Backup
       if: ${{ inputs.action_type == 'backup' }}
-      uses: ./shield
+      uses: ${{ env.actionPath }}/shield
       with:
         activation_code: ${{ inputs.activation_code }}
         encryption_password: ${{ inputs.encryption_password }}
         
     - name: Run Restore
       if: ${{ inputs.action_type == 'restore' }}
-      uses: ./restore
+      uses: ${{ env.actionPath }}/restore
       with:
         activation_code: ${{ inputs.activation_code }}
         encryption_password: ${{ inputs.encryption_password }}
