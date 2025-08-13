@@ -2,35 +2,28 @@
 
 set -e
 
-# If there is a valid commit, collect metadataa
-if git rev-parse --verify HEAD >/dev/null 2>&1; then
-    COMMIT=$(git log -1 --pretty=format:"%H")
-    SHORT=$(git log -1 --pretty=format:"%h")
-    PARENTS=$(git log -1 --pretty=format:"%P")
-    AUTHOR=$(git log -1 --pretty=format:"%an <%ae>")
-    DATE=$(git log -1 --pretty=format:"%ad")
-    COMMITTER=$(git log -1 --pretty=format:"%cn")
-    MESSAGE=$(git log -1 --pretty=format:"%s%n%b")
-else
-    COMMIT="" SHORT="" PARENTS="" AUTHOR="" DATE="" COMMITTER="" MESSAGE=""
-fi
-
-CURL_ARGS=(
-    "-F" "MetaData[Event]=$GITHUB_EVENT_NAME"
-    "-F" "MetaData[Ref]=$GITHUB_REF"
-    "-F" "MetaData[Actor]=$GITHUB_ACTOR"
-    "-F" "MetaData[Owner]=$GITHUB_REPOSITORY_OWNER"
-    "-F" "MetaData[OwnerType]=$GITHUB_EVENT_REPOSITORY_OWNER_TYPE"
+curl_args=(
+  -F "MetaData[Event]=$GITHUB_EVENT_NAME"
+  -F "MetaData[Ref]=$GITHUB_REF"
+  -F "MetaData[Actor]=$GITHUB_ACTOR"
+  -F "MetaData[Owner]=${GITHUB_REPOSITORY%/*}"
+  -F "MetaData[OwnerType]=$GITHUB_ACTOR"
 )
 
-[ -n "$COMMIT" ] && CURL_ARGS+=("-F" "MetaData[Commit]=$COMMIT")
-[ -n "$SHORT" ] && CURL_ARGS+=("-F" "MetaData[CommitShort]=$SHORT")
-[ -n "$PARENTS" ] && CURL_ARGS+=("-F" "MetaData[Parents]=$PARENTS")
-[ -n "$AUTHOR" ] && CURL_ARGS+=("-F" "MetaData[Author]=$AUTHOR")
-[ -n "$DATE" ] && CURL_ARGS+=("-F" "MetaData[Date]=$DATE")
-[ -n "$COMMITTER" ] && CURL_ARGS+=("-F" "MetaData[Committer]=$COMMITTER")
-[ -n "$MESSAGE" ] && CURL_ARGS+=("-F" "MetaData[Message]=$MESSAGE")
-
+if git rev-parse --verify HEAD &>/dev/null; then
+  commit_data=$(git log -1 --pretty="%H|%h|%P|%an <%ae>|%ad|%cn|%s%n%b")
+  IFS='|' read -r COMMIT SHORT PARENTS AUTHOR DATE COMMITTER MESSAGE <<< "$commit_data"
+  
+  curl_args+=(
+    -F "MetaData[Commit]=$COMMIT"
+    -F "MetaData[CommitShort]=$SHORT"
+    -F "MetaData[Parents]=$PARENTS"
+    -F "MetaData[Author]=$AUTHOR"
+    -F "MetaData[Date]=$DATE"
+    -F "MetaData[Committer]=$COMMITTER"
+    -F "MetaData[Message]=$MESSAGE"
+  )
+fi
 
 RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
     "$API_BASE_URL/backup/shield" \
@@ -45,7 +38,7 @@ RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
     -F "FullPath=/${GITHUB_REPOSITORY}/repo.tar.zst" \
     -F "encryptionType=None" \
     -F "RevisionType=1" \
-    "${CURL_ARGS[@]}"
+    "${curl_args[@]}"
 )
 
 HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
