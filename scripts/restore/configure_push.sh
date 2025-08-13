@@ -1,8 +1,6 @@
 #!/bin/bash
 cd repo-mirror
 
-sudo apt-get update && sudo apt-get install -y git-filter-repo
-
 if [ -z "$RESTORE_TOKEN" ]; then
   sudo apt-get install -y git-filter-repo
   git filter-repo --force --path .github/workflows --invert-paths
@@ -12,7 +10,7 @@ else
   TOKEN_TO_USE="$RESTORE_TOKEN"
 fi
 
-echo $TOKEN
+echo "$RESTORE_TOKEN"
 
 git config user.name "myapp File Security"
 git config user.email "file-security@myapp.com"
