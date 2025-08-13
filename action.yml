@@ -52,7 +52,7 @@ runs:
     - name: Create mirror clone
       if: ${{ inputs.file_version_id == '' }}
       shell: bash
-      run: ${{ github.action_path }}/scripts/shield/mirror_clone.sh
+      run: git clone --mirror . repo-mirror
 
     - name: Install dependencies
       if: ${{ inputs.file_version_id == '' }}
