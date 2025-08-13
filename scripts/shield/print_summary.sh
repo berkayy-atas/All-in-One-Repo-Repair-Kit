@@ -11,7 +11,6 @@ if [ -n "$commit" ]; then
 **Upload Metadata**
 - Commit:      $commit
 - CommitShort: $commitShort
-- Parents:     $parents
 - Author:      $author
 - Date:        $date
 - Committer:   $committer
