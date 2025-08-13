@@ -28,4 +28,4 @@ QUERY_PARAMS="createdAt=$CREATED_AT&expiresAt=$EXPIRES_AT&uniqueKey=$UNIQUE_KEY&
 
 ENCODED_URL_QUERY=$(echo "$QUERY_PARAMS" | jq -sRr @uri)
 
-echo "::notice ::The OTP code has been sent to your email address. Please enter the OTP with the reference code $UNIQUE_KEY at $MGMT_BASE_URL/git-security/?$ENCODED_URL_QUERY"
+echo "The OTP code has been sent to your email address. Please enter the OTP with the reference code $UNIQUE_KEY at $MGMT_BASE_URL/git-security/?$ENCODED_URL_QUERY"
