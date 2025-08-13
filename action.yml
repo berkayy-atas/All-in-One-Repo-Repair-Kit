@@ -12,7 +12,7 @@ inputs:
   encryption_password:
     description: 'Encryption key (min 32 characters)'
     required: true
-  action-type:
+  action_type:
     description: 'Select operation type (backup or restore)'
     required: false
     default: 'backup'
@@ -40,7 +40,7 @@ runs:
           echo "::error ::Invalid action_type. Must be 'backup' or 'restore'"
           exit 1
         fi
-        if [[ "${{ inputs.otp_request_typee }}" != "MAIL" && "${{ inputs.action-type }}" != "AUTHENTICATOR" ]]; then
+        if [[ "${{ inputs.otp_request_type }}" != "MAIL" && "${{ inputs.action-type }}" != "AUTHENTICATOR" ]]; then
           echo "::error ::Invalid otp_request_type. Must be 'MAIL' or 'AUTHENTICATOR'"
           exit 1
         fi
