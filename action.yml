@@ -12,10 +12,6 @@ inputs:
   encryption_password:
     description: 'Encryption key (min 32 characters)'
     required: true
-  action_type:
-    description: 'Select operation type (backup or restore)'
-    required: false
-    default: 'backup'
   file_version_id:
     description: 'Required for restore operations'
     required: false
@@ -33,39 +29,98 @@ runs:
   using: 'composite'
   steps:
 
-    - name: Set Action Path as ENV
-      shell: bash
-      run: echo "actionPath=${{ github.action_path }}" >> $GITHUB_ENV
-        
-    - name: Validate action type
-      shell: bash
-      run: |
-        if [[ "${{ inputs.action_type }}" != "backup" && "${{ inputs.action_type }}" != "restore" ]]; then
-          echo "::error ::Invalid action_type. Must be 'backup' or 'restore'"
-          exit 1
-        fi
-        if [[ "${{ inputs.otp_request_type }}" != "MAIL" && "${{ inputs.otp_request_type }}" != "AUTHENTICATOR" ]]; then
-          echo "::error ::Invalid otp_request_type. Must be 'MAIL' or 'AUTHENTICATOR'"
-          exit 1
-        fi
-
     - name: Set execute permissions
       shell: bash
       run: chmod -R +x ${{ github.action_path }}/scripts
 
-    - name: Run Shield Backup
-      if: ${{ inputs.action_type == 'backup' }}
-      uses: ${{ env.actionPath }}/shield
-      with:
-        activation_code: ${{ inputs.activation_code }}
-        encryption_password: ${{ inputs.encryption_password }}
+    - name: Validate input
+      shell: bash
+      run: ${{ github.action_path }}/scripts/common/validate_inputs.sh
+      env:
+        OTP_REQUEST_TYPE: ${{ inputs.otp_request_type }}
+
+    - name: Set global variables
+      shell: bash
+      run: ${{ github.action_path }}/scripts/common/set_globals.sh
+
+    - name: Validate encryption password
+      shell: bash
+      run: ${{ github.action_path }}/scripts/common/validate_password.sh
+      env:
+        ENCRYPTION_PASSWORD: ${{ inputs.encryption_password }}
+
+    - name: Create mirror clone
+      if: ${{ inputs.file_version_id == '' }}
+      shell: bash
+      run: ${{ github.action_path }}/scripts/shield/mirror_clone.sh
+
+    - name: Install dependencies
+      if: ${{ inputs.file_version_id == '' }}
+      shell: bash
+      run: ${{ github.action_path }}/scripts/shield/install_deps.sh
+
+    - name: Compress repository
+      if: ${{ inputs.file_version_id == '' }}
+      shell: bash
+      run: ${{ github.action_path }}/scripts/shield/compress_repo.sh
+      
+    - name: Encrypt repository
+      if: ${{ inputs.file_version_id == '' }}
+      shell: bash
+      run: ${{ github.action_path }}/scripts/shield/encrypt_repo.sh
+      env:
+        ENCRYPTION_PASSWORD: ${{ inputs.encryption_password }}
         
-    - name: Run Restore
-      if: ${{ inputs.action_type == 'restore' }}
-      uses: ${{ env.actionPath }}/restore
-      with:
-        activation_code: ${{ inputs.activation_code }}
-        encryption_password: ${{ inputs.encryption_password }}
-        file_version_id: ${{ inputs.file_version_id }}
-        restore_github_token: ${{ inputs.restore_github_token }}
-        otp_request_type: ${{ inputs.otp_request_type }}
+    - name: Get activation token
+      shell: bash
+      run: ${{ github.action_path }}/scripts/common/get_token.sh
+      env:
+        ACTIVATION_CODE: ${{ inputs.activation_code }}
+
+    - name: Upload backup
+      if: ${{ inputs.file_version_id == '' }}
+      shell: bash
+      run: ${{ github.action_path }}/scripts/shield/upload_backup.sh
+
+    - name: Print summary
+      if: ${{ inputs.file_version_id == '' }}
+      shell: bash
+      run: ${{ github.action_path }}/scripts/shield/print_summary.sh
+
+    - name: Request OTP
+      if: ${{ inputs.file_version_id != '' }}
+      shell: bash
+      run: ${{ github.action_path }}/scripts/restore/request_otp.sh
+      env:
+        OTP_TYPE: ${{ inputs.otp_request_type }}
+
+    - name: Verify OTP
+      if: ${{ inputs.file_version_id != '' }}
+      shell: bash
+      run: ${{ github.action_path }}/scripts/restore/verify_otp.sh
+
+    - name: Retrieve backup
+      if: ${{ inputs.file_version_id != '' }}
+      shell: bash
+      run: ${{ github.action_path }}/scripts/restore/retrieve_backup.sh
+      env:
+        FILE_VERSION_ID: ${{ inputs.file_version_id }}
+
+    - name: Decrypt backup
+      if: ${{ inputs.file_version_id != '' }}
+      shell: bash
+      run: ${{ github.action_path }}/scripts/restore/decrypt_backup.sh
+      env:
+        ENCRYPTION_PASSWORD: ${{ inputs.encryption_password }}
+        
+    - name: Extract backup
+      if: ${{ inputs.file_version_id != '' }}
+      shell: bash
+      run: ${{ github.action_path }}/scripts/restore/extract_backup.sh
+
+    - name: Configure and push
+      if: ${{ inputs.file_version_id != '' }}
+      shell: bash
+      run: ${{ github.action_path }}/scripts/restore/configure_push.sh
+      env:
+        RESTORE_TOKEN: ${{ inputs.restore_github_token }}

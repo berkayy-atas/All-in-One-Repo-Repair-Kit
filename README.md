@@ -94,7 +94,6 @@ jobs:
           activation_code: ${{ secrets.ACTIVATION_CODE }}
           encryption_password: ${{ secrets.ENCRYPTION_PASSWORD }}
           file_version_id: ${{ github.event.inputs.FILE_VERSION_ID }}
-          action_type: 'restore'
 ```
 # 🔑 Personal Access Token (PAT) Setup Guide for Repository Restoration
 
