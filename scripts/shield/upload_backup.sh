@@ -24,9 +24,6 @@ if git rev-parse --verify HEAD &>/dev/null; then
   )
 fi
 
-echo "--- Curl Argümanları Başlangıç ---"
-printf "%s\n" "${curl_args[@]}"
-echo "--- Curl Argümanları Bitiş ---"
 
 RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
     "$API_BASE_URL/backup/shield" \
