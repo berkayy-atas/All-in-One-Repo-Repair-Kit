@@ -17,7 +17,6 @@ if git rev-parse --verify HEAD &>/dev/null; then
   curl_args+=(
     -F "MetaData[Commit]=$COMMIT"
     -F "MetaData[CommitShort]=$SHORT"
-    -F "MetaData[Parents]=$PARENTS"
     -F "MetaData[Author]=$AUTHOR"
     -F "MetaData[Date]=$DATE"
     -F "MetaData[Committer]=$COMMITTER"
