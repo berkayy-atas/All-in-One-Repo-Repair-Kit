@@ -138,13 +138,3 @@ Add this to your restoration workflow (.github/workflows/restore.yml):
 ```
 
 
-
-#🔐 OTP Authentication Process
-During restore operations, you'll receive OTP verification through:
-
-  - Email Delivery (default): OTP sent to your registered email
-  - Authenticator App: Use TOTP-compatible apps like Google Authenticator
-
-```yaml
-otp_request_type: 'AUTHENTICATOR'
-```
