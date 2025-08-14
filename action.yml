@@ -137,17 +137,4 @@ runs:
 
         git config user.name "myapp File Security"
         git config user.email "file-security@myapp.com"
-        git remote add deneme1 "https://x-access-token:${TOKEN_TO_USE}@github.com/${{ github.repository }}.git"
-
-
-        # Debug: Uzak depo bilgileri
-        echo "=== Uzak depo bilgisi ==="
-        git remote -v
-
-        # Tüm branch'leri ve tag'leri zorla gönder
-        echo "=== Branch'ler gönderiliyor ==="
-        git push --force --all deneme1
-        echo "=== Tag'ler gönderiliyor ==="
-        git push --force --tags deneme1
-        
-        echo "::notice title=Success!::The repository was successfully restore."
+        git push --mirror --force  "https://x-access-token:${TOKEN_TO_USE}@github.com/${{ github.repository }}.git"
