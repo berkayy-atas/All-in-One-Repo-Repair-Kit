@@ -10,7 +10,9 @@ else
   TOKEN_TO_USE="$RESTORE_TOKEN"
 fi
 
-echo "$RESTORE_TOKEN"
+echo  "https://x-access-token:$TOKEN_TO_USE@github.com/$GITHUB_REPOSITORY.git"
+echo  "https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
+
 
 git config user.name "myapp File Security"
 git config user.email "file-security@myapp.com"
