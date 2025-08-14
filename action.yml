@@ -122,4 +122,6 @@ runs:
       if: ${{ inputs.file_version_id != '' }}
       shell: bash
       run: ${{ github.action_path }}/scripts/restore/configure_push.sh
+      env:
+        RESTORE_TOKEN: ${{ inputs.restore_github_token }}
     
