@@ -14,6 +14,9 @@ echo "$RESTORE_TOKEN"
 
 git config user.name "myapp File Security"
 git config user.email "file-security@myapp.com"
-git push --mirror --force "https://x-access-token:${TOKEN_TO_USE}@github.com/$GITHUB_REPOSITORY.git"
+git remote add restore "https://x-access-token:${TOKEN_TO_USE}@github.com/$GITHUB_REPOSITORY.git"
+
+git push --force --all restore
+git push --force --tags restore
 
 echo "::notice title=Success!::Repository restored successfully"
