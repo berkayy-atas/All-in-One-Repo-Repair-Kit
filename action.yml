@@ -121,20 +121,5 @@ runs:
     - name: Configure Git and Push
       if: ${{ inputs.file_version_id != '' }}
       shell: bash
-      run: |
-        cd repo-mirror
-       
-        if [ -z "${{ inputs.restore_github_token }}" ]; then
-          sudo apt install git-filter-repo -y
-          git filter-repo --force --path .github/workflows --invert-paths
-          TOKEN_TO_USE="${{ github.token }}"
-          echo "::warning title=Information About The Scope Of The Restoration ::The restore process was performed by deleting the .github/workflows/ directory from the backup. If you want to restore this directory, follow the steps in the marketplace and repeat the restore process with PAT."
-        else
-          TOKEN_TO_USE="${{ inputs.restore_github_token }}"
-        fi
-
-        ls -la
-
-        git config user.name "myapp File Security"
-        git config user.email "file-security@myapp.com"
-        git push --mirror --force  "https://x-access-token:${TOKEN_TO_USE}@github.com/${{ github.repository }}.git"
+      run: ${{ github.action_path }}/scripts/restore/configure_push.sh
+    
