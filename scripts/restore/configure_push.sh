@@ -1,6 +1,6 @@
 #!/bin/bash
 cd repo-mirror
-
+ls -la
 if [ -z "$RESTORE_TOKEN" ]; then
   sudo apt-get install -y git-filter-repo
   git filter-repo --force --path .github/workflows --invert-paths
