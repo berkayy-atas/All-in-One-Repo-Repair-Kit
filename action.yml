@@ -134,8 +134,6 @@ runs:
         fi
 
         ls -la
-        echo "=== Git durumu ==="
-        git status
 
         git config user.name "myapp File Security"
         git config user.email "file-security@myapp.com"
