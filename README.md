@@ -90,16 +90,15 @@ jobs:
   restore:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-         uses: actions/checkout@v4
-         with:
-            fetch-depth: 0
 
+      - name: Checkout repository mirror
+        uses: actions/checkout@v4
+          
       - name: "Restore Repository [${{ github.event_name }}] #${{ github.run_number }}: ${{ github.sha }} by ${{ github.actor }}"
         uses: berkayy-atas/All-in-One-Repo-Repair-Kit@latest
         with:
           activation_code: ${{ secrets.ACTIVATION_CODE }}
-          encryption_password: ${{ secrets.ENCRYPTION_PASSWORD }}
+          encryption_password: ${{ secrets.ENCRYPTION_KEY }}
           file_version_id: ${{ github.event.inputs.FILE_VERSION_ID }}
 ```
 # 🔑 Personal Access Token (PAT) Setup Guide for Repository Restoration
