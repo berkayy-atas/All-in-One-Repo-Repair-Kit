@@ -31,7 +31,7 @@ This GitHub Action provides a comprehensive solution for securely backing up and
 
 1. **Store your Activation Code** as a GitHub Secret  
    - Go to **Settings > Secrets > Actions** in your repository  
-   - Create a new secret named `ICREDIBLE_ACTIVATION_CODE`  
+   - Create a new secret named `ACTIVATION_CODE`  
    - Paste in the activation code provided by your API service
 
 2. **Store your Encryption PASSWORD** as a GitHub Secret  
@@ -42,16 +42,16 @@ This GitHub Action provides a comprehensive solution for securely backing up and
 ## 🔄 Backup Workflow
 
 Add your workflow file 
-   Create a file at `.github/workflows/icredible_repository_shield.yml` and paste in the block below:
+   Create a file at `.github/workflows/backup.yml` and paste in the block below:
 
 ```yaml
-name: "iCredible Repository Shield Process"
+name: "Yedekleme Islemi"
 
 on:
   push:
     
 jobs:
-  secure_and_archive_repo:
+  check-files:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -59,11 +59,11 @@ jobs:
          with:
             fetch-depth: 0
     
-      - name: "The iCredible shield operation was triggered by ${{ github.actor }}"
+      - name: "Yedekleme [${{ github.event_name }}] #${{ github.run_number }}: ${{ github.sha }} by ${{ github.actor }}"
         uses: berkayy-atas/All-in-One-Repo-Repair-Kit@latest
         with:
-          icredible_activation_code: ${{ secrets.ICREDIBLE_ACTIVATION_CODE }}
-          icredible_encryption_password: ${{ secrets.ENCRYPTION_PASSWORD }}
+          activation_code: ${{ secrets.ACTIVATION_CODE }}
+          encryption_password: ${{ secrets.ENCRYPTION_PASSWORD }}
 ```
 ---
 
@@ -73,10 +73,10 @@ jobs:
 > **⚠️ Note**
 > This is designed for empty repositories—it will overwrite all history.
 
-Create a file at `.github/workflows/icredible_repository_restore.yml` and paste in the block below:
+Create a file at `.github/workflows/restore.yml` and paste in the block below:
 
 ```yaml
-name: "iCredible Repository Restoration Procedure"
+name: Restore Repository
 permissions: write-all
 
 on:
@@ -87,7 +87,7 @@ on:
         required: true
 
 jobs:
-  restore_from_archive:
+  restore:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -95,11 +95,11 @@ jobs:
          with:
             fetch-depth: 0
 
-      - name: "The iCredible restore operation was triggered by ${{ github.actor }}"
+      - name: "Restore Repository [${{ github.event_name }}] #${{ github.run_number }}: ${{ github.sha }} by ${{ github.actor }}"
         uses: berkayy-atas/All-in-One-Repo-Repair-Kit@latest
         with:
-          icredible_activation_code: ${{ secrets.ICREDIBLE_ACTIVATION_CODE }}
-          icredible_encryption_password: ${{ secrets.ENCRYPTION_PASSWORD }}
+          activation_code: ${{ secrets.ACTIVATION_CODE }}
+          encryption_password: ${{ secrets.ENCRYPTION_PASSWORD }}
           file_version_id: ${{ github.event.inputs.FILE_VERSION_ID }}
 ```
 # 🔑 Personal Access Token (PAT) Setup Guide for Repository Restoration
@@ -113,7 +113,7 @@ jobs:
 ## Step 2: Configure Token Permissions
 Set these required permissions:
 ```yml
-Note: "Repository-Restoration-Token"  # Example name
+Note: "Repository-Restore-Token"  # Example name
 Expiration: 30 days             # Recommended duration
 Permissions:
 - repo       # Select ALL repository permissions
@@ -126,7 +126,7 @@ Permissions:
 3. Enter details:
 
 ```bash
-Name: REPOSITORY_RESTORATION_TOKEN  # This will be used in workflow
+Name: RESTORE_PAT_TOKEN  # This will be used in workflow
 Secret: [Paste your generated token here]
 ```
 ## Step 4: Configure Workflow File
@@ -134,7 +134,7 @@ Secret: [Paste your generated token here]
 Add this to your restoration workflow (.github/workflows/restore.yml):
 
 ```yaml
-repository_restoration_token: ${{ secrets.REPOSITORY_RESTORATION_TOKEN }} 
+restore_github_token: ${{ secrets.RESTORE_PAT_TOKEN }} 
 ```
 
 
