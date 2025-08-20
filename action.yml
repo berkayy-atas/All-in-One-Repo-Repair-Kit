@@ -44,16 +44,6 @@ runs:
       shell: bash
       run: chmod -R +x ${{ github.action_path }}/scripts
 
-    - name: Validate input
-      shell: bash
-      run: ${{ github.action_path }}/scripts/common/validate_inputs.sh
-      env:
-        OTP_REQUEST_TYPE: ${{ inputs.otp_request_type }}
-        ACTION: ${{ inputs.action }}
-        ENCRYPTION_PASSWORD: ${{ inputs.encryption_password }}
-        FILE_VERSION_ID: ${{ inputs.file_version_id }}
-        ACTIVATION_CODE: ${{ inputs.activation_code }}
-
     - name: Set global variables
       shell: bash
       run: ${{ github.action_path }}/scripts/common/set_globals.sh
