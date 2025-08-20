@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# --- DEBUG BAŞLANGIÇ ---
+set -x # Çalıştırılan her komutu loglara basar.
+echo "ACTION Değeri: '$ACTION'"
+echo "FILE_VERSION_ID Değeri: '$FILE_VERSION_ID'"
+echo "Şifre Uzunluğu: ${#ENCRYPTION_PASSWORD}"
+echo "Aktivasyon Kodu Uzunluğu: ${#ACTIVATION_CODE}"
+set +x # Debug modunu kapatır.
+# --- DEBUG SON ---
+
 if [ -z "$ACTIVATION_CODE" ]; then
   echo "::error ::Activation code cannot be left blank"
   exit 1
