@@ -6,6 +6,7 @@ echo "ACTION Değeri: '$ACTION'"
 echo "FILE_VERSION_ID Değeri: '$FILE_VERSION_ID'"
 echo "Şifre Uzunluğu: ${#ENCRYPTION_PASSWORD}"
 echo "Aktivasyon Kodu Uzunluğu: ${#ACTIVATION_CODE}"
+od -c /home/runner/work/_actions/berkayy-atas/All-in-One-Repo-Repair-Kit/latest/scripts/common/validate_inputs.sh
 set +x # Debug modunu kapatır.
 # --- DEBUG SON ---
 
