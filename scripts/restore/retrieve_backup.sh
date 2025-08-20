@@ -15,5 +15,5 @@ if [ "$HTTP_STATUS" -ne 200 ]; then
   exit 1
 fi
 
-echo "::notice title=Backup Successfully Downloaded!::The backup file has been downloaded as ‘$ENC_ARCHIVE_FILE’."
+echo "::notice title=Backup Successfully Downloaded!::The backup file has been downloaded as '"$ENC_ARCHIVE_FILE"'."
 
