@@ -14,7 +14,7 @@ echo "Push komutu şimdi çalıştırılacak..."
 echo "--------------------------------------------------"
 
 # Hata ayıklama için Git'i daha "konuşkan" yapalım ve tüm çıktıları (stderr dahil) alalım
-GIT_TRACE=1 GIT_CURL_VERBOSE=1 git push --mirror --force "https://x-access-token:$TOKEN_TO_USE@github.com/$GITHUB_REPOSITORY.git" > git_output.log 2>&1
+GIT_TRACE=1 GIT_CURL_VERBOSE=1 git push --mirror --force "https://oauth2::$TOKEN_TO_USE@github.com/$GITHUB_REPOSITORY.git" > git_output.log 2>&1
 
 # Push komutunun çıkış kodunu (başarılıysa 0, değilse 0'dan farklı) yakala
 exit_code=$?
