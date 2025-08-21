@@ -8,8 +8,6 @@ git config user.name "iCredible File Security"
 git config user.email "file-security@icredible.com"
 
 git remote set-url origin "https://$TOKEN_TO_USE@github.com/$GITHUB_REPOSITORY.git"
-
-git config --unset remote.origin.mirror
-git push --mirror origin "refs/remotes/origin/*:refs/heads/*"
+git push --mirror origin 
 
 echo "::notice title=Success!::Repository restored successfully"
