@@ -7,8 +7,10 @@ TOKEN_TO_USE=${REPOSITORY_RESTORATION_TOKEN:-$GITHUB_DEFAULT_TOKEN}
 git config user.name "iCredible File Security"
 git config user.email "file-security@icredible.com"
 
-git remote set-url origin "https://x-access-token:$TOKEN_TO_USE@github.com/$GITHUB_REPOSITORY.git"
+REMOTE_URL="https://x-access-token:$TOKEN_TO_USE@github.com/$GITHUB_REPOSITORY.git"
+git remote set-url origin "$REMOTE_URL"
 
+echo "Local branches:"
 git branch -a
 
 echo "Pushing ALL branches individually..."
@@ -19,10 +21,10 @@ for branch in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
 done
 
 echo "Pushing ALL tags..."
-git push origin --tags --force
+git push "$REMOTE_URL" --tags --force
 
 echo "Verifying pushed branches..."
 # Push edilen branch'leri kontrol et
-git ls-remote --heads origin
+git ls-remote --heads "$REMOTE_URL"
 
 echo "::notice title=Success!::Repository restored successfully"
