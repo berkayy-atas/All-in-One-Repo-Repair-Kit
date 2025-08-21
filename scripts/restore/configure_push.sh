@@ -19,10 +19,10 @@ for branch in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
 done
 
 echo "Pushing ALL tags..."
-git push "$REMOTE_URL" --tags --force
+git push origin --tags --force
 
 echo "Verifying pushed branches..."
 # Push edilen branch'leri kontrol et
-git ls-remote --heads "$REMOTE_URL"
+git ls-remote --heads origin
 
 echo "::notice title=Success!::Repository restored successfully"
