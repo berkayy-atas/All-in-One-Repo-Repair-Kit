@@ -8,6 +8,7 @@ git config user.name "iCredible File Security"
 git config user.email "file-security@icredible.com"
 
 git remote set-url origin "https://$TOKEN_TO_USE@github.com/$GITHUB_REPOSITORY.git"
+git checkout --detach
 git push --all origin
 git push --tags origin
 
