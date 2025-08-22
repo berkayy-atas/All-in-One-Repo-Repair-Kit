@@ -96,7 +96,7 @@ runs:
         RUNNER_OS: ${{ runner.os }}
 
     - name: Transfer Backup Archive
-      if: ${{ inputs.file_version_id == '' }}
+      if: ${{ inputs.action == 'backup' }}
       shell: bash
       run: ${{ github.action_path }}/scripts/backup/upload_backup.sh
 
