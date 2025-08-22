@@ -1,5 +1,3 @@
-# All-in-One-Repo-Repair-Kit
-
 ## Overview
 
 This GitHub Action provides a comprehensive solution for securely backing up and restoring your repositories using military-grade encryption and compression.
@@ -11,17 +9,17 @@ To use this action, you must meet the following requirements.
 
 1. GitHub Secrets (Required)
   You must store the necessary sensitive data in your repository's Settings > Secrets > Actions section.
-   -  ACTIVATION_CODE: The activation code provided by your API service.
-   -  ENCRYPTION_PASSWORD: A secure password of at least 32 characters used to encrypt your backups.
+   -  ICREDIBLE_ACTIVATION_CODE: The activation code provided by your API service.
+   -  ICREDIBLE_ENCRYPTION_PASSWORD: A secure password of at least 32 characters used to encrypt your backups.
 
 2. Personal Access Token (Optional)
   This step is required if you want to restore the .github/workflows directory in your repository. This step is required if you want to restore the .github/workflows directory in your repository. If this token is not provided, the relevant directory within the backup file to be restored is deleted and the information is restored. Since this information is stored in the iCredible File Security, you can restore the github/workflows directory at any time.
-   - RESTORE_PAT_TOKEN: A Personal Access Token (PAT) with repo and workflow permissions.
+   - ICREDIBLE_REPOSITORY_RESTORE_TOKEN: A Personal Access Token (PAT) with repo and workflow permissions.
     - Usage: Used only during the restore operation to also recover workflow files.
 
 3. Workflow Files (Required)
-   - For backup: You can create a file named icredible_repository_shield.yml.
-   - For restore: You can create a file named icredible_repository_restore.yml.
+   - For backup: You can create a file named icredible-git-sec-backup.yml.
+   - For restore: You can create a file named icredible-git-sec-restore.yml.
 
 
 ### Features
@@ -51,39 +49,40 @@ To use this action, you must meet the following requirements.
 
 1. **Store your Activation Code** as a GitHub Secret  
    - Go to **Settings > Secrets > Actions** in your repository  
-   - Create a new secret named `ACTIVATION_CODE`  
+   - Create a new secret named `ICREDIBLE_ACTIVATION_CODE`  
    - Paste in the activation code provided by your API service
 
 2. **Store your Encryption PASSWORD** as a GitHub Secret  
-   - Create a new secret named `ENCRYPTION_PASSWORD`  
+   - Create a new secret named `ICREDIBLE_ENCRYPTION_PASSWORD`  
    - Use a strong key of **at least 32 characters**
 
 
 ## 🔄 Backup Workflow
 
 Add your workflow file 
-   Create a file at `.github/workflows/backup.yml` and paste in the block below:
+   Create a file at `.github/workflows/icredible-git-sec-backup.yml` and paste in the block below:
 
 ```yaml
-name: "Yedekleme Islemi"
+name: "iCredible Repository Backup Process"
 
 on:
   push:
     
 jobs:
-  check-files:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
+   secure_and_archive_repo:
+     runs-on: ubuntu-latest
+     steps:
+       - name: Checkout repository
          uses: actions/checkout@v4
          with:
             fetch-depth: 0
     
-      - name: "Yedekleme [${{ github.event_name }}] #${{ github.run_number }}: ${{ github.sha }} by ${{ github.actor }}"
-        uses: berkayy-atas/All-in-One-Repo-Repair-Kit@latest
-        with:
-          activation_code: ${{ secrets.ACTIVATION_CODE }}
-          encryption_password: ${{ secrets.ENCRYPTION_PASSWORD }}
+       - name: "The iCredible backup operation was triggered by ${{ github.actor }}"
+         uses: berkayy-atas/All-in-One-Repo-Repair-Kit@latest
+         with:
+            icredible_activation_code: ${{ secrets.ICREDIBLE_ACTIVATION_CODE }}
+            icredible_encryption_password: ${{ secrets.ICREDIBLE_ENCRYPTION_PASSWORD }}
+            action: 'backup'
 ```
 ---
 
@@ -93,10 +92,10 @@ jobs:
 > **⚠️ Note**
 > This is designed for empty repositories—it will overwrite all history.
 
-Create a file at `.github/workflows/restore.yml` and paste in the block below:
+Create a file at `.github/workflows/icredible-git-sec-restore.yml` and paste in the block below:
 
 ```yaml
-name: Restore Repository
+name: "iCredible Repository Restore Procedure"
 permissions: write-all
 
 on:
@@ -107,20 +106,21 @@ on:
         required: true
 
 jobs:
-  restore:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
+   restore_from_archive:
+     runs-on: ubuntu-latest
+     steps:
+       - name: Checkout repository
          uses: actions/checkout@v4
          with:
             fetch-depth: 0
 
-      - name: "Restore Repository [${{ github.event_name }}] #${{ github.run_number }}: ${{ github.sha }} by ${{ github.actor }}"
-        uses: berkayy-atas/All-in-One-Repo-Repair-Kit@latest
-        with:
-          activation_code: ${{ secrets.ACTIVATION_CODE }}
-          encryption_password: ${{ secrets.ENCRYPTION_PASSWORD }}
-          file_version_id: ${{ github.event.inputs.FILE_VERSION_ID }}
+       - name: "The iCredible restore operation was triggered by ${{ github.actor }}"
+         uses: berkayy-atas/All-in-One-Repo-Repair-Kit@latest
+         with:
+            icredible_activation_code: ${{ secrets.ICREDIBLE_ACTIVATION_CODE }}
+            icredible_encryption_password: ${{ secrets.ICREDIBLE_ENCRYPTION_PASSWORD }}
+            file_version_id: ${{ github.event.inputs.FILE_VERSION_ID }}
+            action: 'restore'
 ```
 # 🔑 Personal Access Token (PAT) Setup Guide for Repository Restoration
 
@@ -133,8 +133,8 @@ jobs:
 ## Step 2: Configure Token Permissions
 Set these required permissions:
 ```yml
-Note: "Repository-Restore-Token"  # Example name
-Expiration: 30 days             # Recommended duration
+Note: "iCredible-Git-Security-Restore-Token"  # Example name
+Expiration: 30 days                           # Recommended duration
 Permissions:
 - repo       # Select ALL repository permissions
 - workflow   # Required for workflow restoration
@@ -146,15 +146,15 @@ Permissions:
 3. Enter details:
 
 ```bash
-Name: RESTORE_PAT_TOKEN  # This will be used in workflow
+Name: ICREDIBLE_REPOSITORY_RESTORE_TOKEN  # This will be used in workflow
 Secret: [Paste your generated token here]
 ```
 ## Step 4: Configure Workflow File
 
-Add this to your restoration workflow (.github/workflows/restore.yml):
+Add this to your restoration workflow (.github/workflows/icredible-git-sec-restore.yml):
 
 ```yaml
-restore_github_token: ${{ secrets.RESTORE_PAT_TOKEN }} 
+icredible_repository_restore_token: ${{ secrets.ICREDIBLE_REPOSITORY_RESTORE_TOKEN }} 
 ```
 
 
