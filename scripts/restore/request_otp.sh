@@ -16,13 +16,13 @@ if [ "$HTTP_STATUS" -ne 200 ]; then
   exit 1
 fi
 
-UNIQUE_KEY=$(echo "$JSON_BODY" | jq -r '.data.uniqueKey' | tr -d '\n\r')
-CREATED_AT=$(echo "$JSON_BODY" | jq -r '.data.createdAt' | tr -d '\n\r')
-EXPIRES_AT=$(echo "$JSON_BODY" | jq -r '.data.expiresAt' | tr -d '\n\r')
+UNIQUE_KEY=$(echo -n "$JSON_BODY" | jq -r '.data.uniqueKey')
+CREATED_AT=$(echo -n "$JSON_BODY" | jq -r '.data.createdAt')
+EXPIRES_AT=$(echo -n "$JSON_BODY" | jq -r '.data.expiresAt')
 
-ENCODED_UNIQUE_KEY=$(echo "$UNIQUE_KEY" | jq -sRr @uri)
-ENCODED_CREATED_AT=$(echo "$CREATED_AT" | jq -sRr @uri)
-ENCODED_EXPIRES_AT=$(echo "$EXPIRES_AT" | jq -sRr @uri)
+ENCODED_UNIQUE_KEY=$(echo -n "$UNIQUE_KEY" | jq -sRr @uri)
+ENCODED_CREATED_AT=$(echo -n "$CREATED_AT" | jq -sRr @uri)
+ENCODED_EXPIRES_AT=$(echo -n "$EXPIRES_AT" | jq -sRr @uri)
 
 echo "UNIQUE_KEY=$UNIQUE_KEY" >> "$GITHUB_ENV"
 echo "CREATED_AT=$CREATED_AT" >> "$GITHUB_ENV"
