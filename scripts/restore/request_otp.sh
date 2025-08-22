@@ -16,9 +16,9 @@ if [ "$HTTP_STATUS" -ne 200 ]; then
   exit 1
 fi
 
-UNIQUE_KEY=$(echo -n "$JSON_BODY" | jq -r '.data.uniqueKey')
-CREATED_AT=$(echo -n "$JSON_BODY" | jq -r '.data.createdAt')
-EXPIRES_AT=$(echo -n "$JSON_BODY" | jq -r '.data.expiresAt')
+UNIQUE_KEY=$(echo "$JSON_BODY" | jq -r '.data.uniqueKey')
+CREATED_AT=$(echo "$JSON_BODY" | jq -r '.data.createdAt')
+EXPIRES_AT=$(echo "$JSON_BODY" | jq -r '.data.expiresAt')
 
 ENCODED_UNIQUE_KEY=$(echo -n "$UNIQUE_KEY" | jq -sRr @uri)
 ENCODED_CREATED_AT=$(echo -n "$CREATED_AT" | jq -sRr @uri)
