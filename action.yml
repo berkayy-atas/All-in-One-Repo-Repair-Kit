@@ -151,19 +151,13 @@ runs:
       if: ${{ inputs.action == 'restore' }}
       shell: bash
       run: |
-        echo "Fetching current repository Actions permissions..."
-        gh api /repos/${{ github.repository }}/actions/permissions > actions_permissions.json
-        
-        echo "Saving current 'enabled' state..."
-        ENABLED_STATE=$(jq -r '.enabled' actions_permissions.json)
-        echo "ACTIONS_WERE_ENABLED=$ENABLED_STATE" >> $GITHUB_ENV
-
-        echo "Saving current 'allowed_actions' state..."
-        ALLOWED_STATE=$(jq -r '.allowed_actions' actions_permissions.json)
-        echo "ALLOWED_ACTIONS_WERE=$ALLOWED_STATE" >> $GITHUB_ENV
-        
-        echo "Disabling Actions for the repository to prevent restore-triggered workflows..."
-        gh api --method PUT /repos/${{ github.repository }}/actions/permissions -f enabled=false
+        curl -L \
+        -X PUT \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer $GH_TOKEN" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        https://api.github.com/repos/OWNER/REPO/actions/permissions \
+        -d '{"enabled":false,"allowed_actions":"selected","sha_pinning_required":true}'    
       env:
         GH_TOKEN: ${{ inputs.icredible_repository_restore_token  }}
 
@@ -179,10 +173,13 @@ runs:
       if: ${{ always() && inputs.action == 'restore' }}
       shell: bash
       run: |
-        echo "Restoring original Actions permissions..."
-        gh api --method PUT /repos/${{ github.repository }}/actions/permissions \
-          -f enabled=${{ env.ACTIONS_WERE_ENABLED }} \
-          -f allowed_actions=${{ env.ALLOWED_ACTIONS_WERE }}
+         curl -L \
+        -X PUT \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer $GH_TOKEN" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        https://api.github.com/repos/OWNER/REPO/actions/permissions \
+        -d '{"enabled":true,"allowed_actions":"selected","sha_pinning_required":true}'    
       env:
         GH_TOKEN: ${{ inputs.icredible_repository_restore_token  }}
     
