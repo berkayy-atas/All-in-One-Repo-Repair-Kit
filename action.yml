@@ -147,17 +147,12 @@ runs:
       shell: bash
       run: ${{ github.action_path }}/scripts/restore/sync_remote_branches.sh
 
-    - name: Get Current Actions Permissions and Disable Actions
+    - name: Suspend Repository Operations for Safe Restore
       if: ${{ inputs.action == 'restore' }}
       shell: bash
-      run: |
-        echo "Disabling Actions to prevent restore-triggered workflows..."
-        gh api \
-          --method PUT \
-          repos/${{ github.repository }}/actions/permissions \
-          -F enabled=false
+      run: ${{ github.action_path }}/scripts/restore/suspend_operations.sh
       env:
-        GH_TOKEN: ${{ inputs.icredible_repository_restore_token  }}
+        GH_TOKEN: ${{ inputs.icredible_repository_restore_token }}
 
     - name: Configure Git and Push
       if: ${{ inputs.action == 'restore' }}
@@ -167,17 +162,12 @@ runs:
         ICREDIBLE_REPOSITORY_RESTORE_TOKEN: ${{ inputs.icredible_repository_restore_token }}
         GITHUB_DEFAULT_TOKEN: ${{ github.token }}
 
-    - name: Restore Original Actions Permissions
-      if: ${{ always() && inputs.action == 'restore' }}
+    - name: Restore Repository Operations After Completion
+      if: ${{ inputs.action == 'restore' }}
       shell: bash
-      run: |
-        echo "Restoring original Actions permissions..."
-        gh api \
-          --method PUT \
-          repos/${{ github.repository }}/actions/permissions \
-          -F enabled=true
+      run: ${{ github.action_path }}/scripts/restore/restore_operations.sh
       env:
-        GH_TOKEN: ${{ inputs.icredible_repository_restore_token  }}
-    
+        GH_TOKEN: ${{ inputs.icredible_repository_restore_token }}
+
     
 # endregion
