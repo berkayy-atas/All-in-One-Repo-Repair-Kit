@@ -147,6 +147,26 @@ runs:
       shell: bash
       run: ${{ github.action_path }}/scripts/restore/sync_remote_branches.sh
 
+    - name: Get Current Actions Permissions and Disable Actions
+      if: ${{ inputs.action == 'restore' }}
+      shell: bash
+      run: |
+        echo "Fetching current repository Actions permissions..."
+        gh api /repos/${{ github.repository }}/actions/permissions > actions_permissions.json
+        
+        echo "Saving current 'enabled' state..."
+        ENABLED_STATE=$(jq -r.enabled actions_permissions.json)
+        echo "ACTIONS_WERE_ENABLED=$ENABLED_STATE" >> $GITHUB_ENV
+
+        echo "Saving current 'allowed_actions' state..."
+        ALLOWED_STATE=$(jq -r.allowed_actions actions_permissions.json)
+        echo "ALLOWED_ACTIONS_WERE=$ALLOWED_STATE" >> $GITHUB_ENV
+        
+        echo "Disabling Actions for the repository to prevent restore-triggered workflows..."
+        gh api --method PUT /repos/${{ github.repository }}/actions/permissions -f enabled=false
+      env:
+        GH_TOKEN: ${{ inputs.icredible_repository_restore_token  }}
+
     - name: Configure Git and Push
       if: ${{ inputs.action == 'restore' }}
       shell: bash
@@ -154,5 +174,17 @@ runs:
       env:
         ICREDIBLE_REPOSITORY_RESTORE_TOKEN: ${{ inputs.icredible_repository_restore_token }}
         GITHUB_DEFAULT_TOKEN: ${{ github.token }}
+
+    - name: Restore Original Actions Permissions
+      if: ${{ always() && inputs.action == 'restore' }}
+      shell: bash
+      run: |
+        echo "Restoring original Actions permissions..."
+        gh api --method PUT /repos/${{ github.repository }}/actions/permissions \
+          -f enabled=${{ env.ACTIONS_WERE_ENABLED }} \
+          -f allowed_actions=${{ env.ALLOWED_ACTIONS_WERE }}
+      env:
+        GH_TOKEN: ${{ inputs.icredible_repository_restore_token  }}
+    
     
 # endregion
