@@ -155,11 +155,11 @@ runs:
         gh api /repos/${{ github.repository }}/actions/permissions > actions_permissions.json
         
         echo "Saving current 'enabled' state..."
-        ENABLED_STATE=$(jq -r.enabled actions_permissions.json)
+        ENABLED_STATE=$(jq -r '.enabled' actions_permissions.json)
         echo "ACTIONS_WERE_ENABLED=$ENABLED_STATE" >> $GITHUB_ENV
 
         echo "Saving current 'allowed_actions' state..."
-        ALLOWED_STATE=$(jq -r.allowed_actions actions_permissions.json)
+        ALLOWED_STATE=$(jq -r '.allowed_actions' actions_permissions.json)
         echo "ALLOWED_ACTIONS_WERE=$ALLOWED_STATE" >> $GITHUB_ENV
         
         echo "Disabling Actions for the repository to prevent restore-triggered workflows..."
