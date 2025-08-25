@@ -173,7 +173,7 @@ runs:
       if: ${{ always() && inputs.action == 'restore' }}
       shell: bash
       run: |
-         curl -L \
+        curl -L \
         -X PUT \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer $GH_TOKEN" \
