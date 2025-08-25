@@ -11,6 +11,6 @@ echo "Suspending repository operations (disabling Actions)..."
 gh api \
   --method PUT \
   repos/$GITHUB_REPOSITORY/actions/permissions \
-  -F enabled_repositories=none
+  -F 'enabled=false'
 
 echo "Actions have been successfully disabled."
