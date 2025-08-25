@@ -8,7 +8,7 @@ if [! -f /tmp/actions_permissions.json ]; then
   gh api \
     --method PUT \
     repos/$GITHUB_REPOSITORY/actions/permissions \
-    -F 'enabled_repositories=all'
+    -F 'enabled=true'
 else
   echo "Found original permissions file. Restoring exact settings."
   gh api \
