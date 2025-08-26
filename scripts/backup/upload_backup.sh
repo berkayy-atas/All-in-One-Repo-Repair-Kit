@@ -7,7 +7,7 @@ curl_args=(
   -F "MetaData[Ref]=$GITHUB_REF"
   -F "MetaData[Actor]=$GITHUB_ACTOR"
   -F "MetaData[Owner]=${GITHUB_REPOSITORY%/*}"
-  -F "MetaData[OwnerType]=$OWNER_TYPE"
+  -F "MetaData[OwnerType]=$GITHUB_ACTOR"
 )
 
 if git rev-parse --verify HEAD &>/dev/null; then
