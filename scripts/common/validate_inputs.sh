@@ -29,4 +29,3 @@ if [[ "$ACTION" == "restore"  && "$PAUSE_ACTIONS" != 'true' && "$PAUSE_ACTIONS" 
 fi
 
 
-
