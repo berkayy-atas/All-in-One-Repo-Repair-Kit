@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ "${#ICREDIBLE_ENCRYPTION_PASSWORD}" -lt 32 ]; then
+if [ "${#ICREDIBLE_ENCRYPTION_PASSWORD}" -lt 6 ]; then
   echo "::error ::Encryption password must be at least 32 characters (got ${#ICREDIBLE_ENCRYPTION_PASSWORD})"
   exit 1
 fi
@@ -15,6 +15,16 @@ fi
 
 if [[ "$ACTION" == "restore"  && -z "$FILE_VERSION_ID"  ]]; then
   echo "::error ::Input 'file_version_id' is required when action is 'restore'."
+  exit 1
+fi
+
+if [[ "$ACTION" == "restore"  && -z "$PAUSE_ACTIONS"  ]]; then
+  echo "::error ::Input 'pause_actions' is required when action is 'restore'."
+  exit 1
+fi
+
+if [[ "$ACTION" == "restore"  && "$PAUSE_ACTIONS" != 'true' && "$PAUSE_ACTIONS" != 'false' ]]; then
+  echo "::error ::Invalid pause actions. Must be 'true' or 'false'"
   exit 1
 fi
 

@@ -8,8 +8,8 @@ RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API_BASE_URL/OTP/Send" \
     "Type": "'"$OTP_DELIVERY_METHOD"'"
   }')
 
-HTTP_STATUS=$(echo -n "$RESPONSE" | tail -n1)
-JSON_BODY=$(echo -n "$RESPONSE" | head -n -1)
+HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+JSON_BODY=$(echo "$RESPONSE" | head -n -1)
 
 if [ "$HTTP_STATUS" -ne 200 ]; then
   echo "::error ::OTP request failed ($HTTP_STATUS): $(echo "$JSON_BODY" | jq -r '.message')"

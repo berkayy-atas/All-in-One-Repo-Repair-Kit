@@ -5,7 +5,7 @@ set -e
 UPLOAD_METADATA=""
 if [ -n "$commit" ]; then
     # decode the Base64-encoded message
-    DECODED_MESSAGE=$(echo -n "$message_b64" | base64 -d)
+    DECODED_MESSAGE=$(echo "$message_b64" | base64 -d)
     UPLOAD_METADATA=$(cat <<EOF
 --------------------------------------------------
 **Upload Metadata**
@@ -25,7 +25,7 @@ SUMMARY=$(cat <<EOF
 --------------------------------------------------
 **Git Metadata**
 Repository: $GITHUB_REPOSITORY
-- Owner: $GITHUB_REPOSITORY_OWNER [$GITHUB_EVENT_REPOSITORY_OWNER_TYPE]
+- Owner: $GITHUB_REPOSITORY_OWNER [$OWNER_TYPE]
 - Event: $GITHUB_EVENT_NAME
 - Ref:   $GITHUB_REF
 - Actor: $GITHUB_ACTOR

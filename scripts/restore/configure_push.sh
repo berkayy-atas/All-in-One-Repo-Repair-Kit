@@ -3,7 +3,7 @@ set -e
 cd repo-mirror
 
 TOKEN_TO_USE=${ICREDIBLE_REPOSITORY_RESTORE_TOKEN:-$GITHUB_DEFAULT_TOKEN}
-REMOTE_URL="https://$TOKEN_TO_USE@github.com/$GITHUB_REPOSITORY.git"
+REMOTE_URL="https://x-access-token:$TOKEN_TO_USE@github.com/$GITHUB_REPOSITORY.git"
 
 git config user.name "$GIT_USER_NAME"
 git config user.email "$GIT_USER_EMAIL"

@@ -36,4 +36,4 @@ if [ "$HTTP_STATUS" -ne 200 ]; then
 fi
 
 echo "endpointId=$(echo "$JSON_BODY" | jq -r '.data.endpointId')" >> $GITHUB_ENV
-echo "TOKEN=$(echo -n "$JSON_BODY" | jq -r '.data.token')" >> $GITHUB_ENV
+echo "TOKEN=$(echo "$JSON_BODY" | jq -r '.data.token')" >> $GITHUB_ENV

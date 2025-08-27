@@ -77,7 +77,7 @@ jobs:
          with:
             fetch-depth: 0
     
-       - name: "The iCredible backup operation was triggered by ${{ github.actor }}"
+       - name: "iCredible Git Sec | Backup"
          uses: berkayy-atas/All-in-One-Repo-Repair-Kit@latest
          with:
             icredible_activation_code: ${{ secrets.ICREDIBLE_ACTIVATION_CODE }}
@@ -95,7 +95,7 @@ jobs:
 Create a file at `.github/workflows/icredible-git-sec-restore.yml` and paste in the block below:
 
 ```yaml
-name: "iCredible Repository Restore Procedure"
+name: "iCredible Repository Restore Process"
 permissions: write-all
 
 on:
@@ -114,12 +114,13 @@ jobs:
          with:
             fetch-depth: 0
 
-       - name: "The iCredible restore operation was triggered by ${{ github.actor }}"
+       - name: "iCredible Git Sec | Restore"
          uses: berkayy-atas/All-in-One-Repo-Repair-Kit@latest
          with:
             icredible_activation_code: ${{ secrets.ICREDIBLE_ACTIVATION_CODE }}
             icredible_encryption_password: ${{ secrets.ICREDIBLE_ENCRYPTION_PASSWORD }}
             file_version_id: ${{ github.event.inputs.FILE_VERSION_ID }}
+            pause_actions: 'true'
             action: 'restore'
 ```
 # 🔑 Personal Access Token (PAT) Setup Guide for Repository Restoration
@@ -151,10 +152,25 @@ Secret: [Paste your generated token here]
 ```
 ## Step 4: Configure Workflow File
 
-Add this to your restoration workflow (.github/workflows/icredible-git-sec-restore.yml):
+Add this to your restore workflow (.github/workflows/icredible-git-sec-restore.yml):
 
 ```yaml
 icredible_repository_restore_token: ${{ secrets.ICREDIBLE_REPOSITORY_RESTORE_TOKEN }} 
 ```
 
+# ⚙️ Optional: Pausing Workflows During Restore
 
+To ensure that the restore process runs without any interference from other automated workflows in your repository, this action includes a safety feature to temporarily pause all GitHub Actions.
+
+This is highly recommended for repositories with active CI/CD pipelines or other automations.
+
+# # How It Works
+  - Before Restore: The action saves your repository's current workflow settings.
+  - Pause: It then temporarily disables GitHub Actions for the entire repository.
+  - After Restore: Once the restore is complete (or if it fails), the action automatically restores the original workflow settings, re-enabling them.
+
+# # Configuration
+
+You can control this feature using the pause_actions input in your restore workflow file.
+  - pause_actions: 'true' (Default): Activates the safety feature. Workflows will be paused during the operation.
+  - pause_actions: 'false': Deactivates the feature. Workflows will remain active, which is not recommended unless you are sure no other actions will interfere.
