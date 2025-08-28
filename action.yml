@@ -3,7 +3,7 @@ author: 'iCredible'
 description: 'Secure repository backup and restoration with encryption'
 branding:
   icon: 'shield'
-  color: 'red'
+  color: 'black'
 
 inputs:
   icredible_activation_code:
