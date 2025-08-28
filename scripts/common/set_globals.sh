@@ -6,12 +6,12 @@ ENC_ARCHIVE_FILE="${COMPRESSED_ARCHIVE_FILE}.enc"
 
 echo "API_BASE_URL=https://dev.api.file-security.icredible.com" >> $GITHUB_ENV
 echo "MGMT_BASE_URL=https://dev.management.file-security.icredible.com" >> $GITHUB_ENV
-echo "ZSTD_COMPRESSION_LEVEL=9" >> $GITHUB_ENV
+echo "ZSTD_COMPRESSION_LEVEL=10" >> $GITHUB_ENV
 echo "SOURCE_ARCHIVE_DIR=${SOURCE_ARCHIVE_DIR}" >> $GITHUB_ENV
 echo "TAR_ARCHIVE_FILE=${TAR_ARCHIVE_FILE}" >> $GITHUB_ENV
 echo "COMPRESSED_ARCHIVE_FILE=${COMPRESSED_ARCHIVE_FILE}" >> $GITHUB_ENV
 echo "ENC_ARCHIVE_FILE=${ENC_ARCHIVE_FILE}" >> $GITHUB_ENV
-echo "ENCRYPTION_ALGORITHM=aes-256-cbc -salt -pbkdf2" >> $GITHUB_ENV
+echo "ENCRYPTION_ALGORITHM=aes-256-gcm -salt -pbkdf2" >> $GITHUB_ENV
 echo "UPLOAD_ATTRIBUTES=32" >> $GITHUB_ENV
 echo "UPLOAD_COMPRESSION_ENGINE=None" >> $GITHUB_ENV
 echo "UPLOAD_COMPRESSION_LEVEL=NoCompression" >> $GITHUB_ENV
@@ -25,5 +25,5 @@ echo "OTP_SOURCE_TYPE=FileDownload" >> $GITHUB_ENV
 echo "OTP_GEN_MODE=Number" >> $GITHUB_ENV
 echo "ENDPOINT_TYPE=Workstation" >> $GITHUB_ENV
 echo "ENDPOINT_NAME=Github Endpoint ('"$GITHUB_REPOSITORY"')" >> $GITHUB_ENV
-echo "ACTIONS_PERM=actions_permissions.json" >> $GITHUB_ENV
+echo "ACTIONS_PERMISSIONS_FILE_PATH=/tmp/actions_permissions.json" >> $GITHUB_ENV
 

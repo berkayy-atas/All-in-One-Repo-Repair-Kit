@@ -24,7 +24,7 @@ inputs:
     description: "A GitHub Personal Access Token (PAT) with 'repo' and 'workflow' scopes. This is required only for the restore operation to push the restored repository and its history."
     required: false
     default: ''
-  pause_actions:
+  suspend_actions:
     description: 'If true, temporarily disables all repository workflows to ensure a safe and uninterrupted restore operation. This prevents other automations from interfering.'
     required: false
     default: 'true'
@@ -56,7 +56,7 @@ runs:
         ICREDIBLE_ENCRYPTION_PASSWORD: ${{ inputs.icredible_encryption_password }}
         FILE_VERSION_ID: ${{ inputs.file_version_id }}
         OTP_DELIVERY_METHOD: ${{ inputs.otp_delivery_method }}
-        PAUSE_ACTIONS: ${{ inputs.pause_actions }}
+        SUSPEND_ACTIONS: ${{ inputs.suspend_actions }}
         ACTION: ${{ inputs.action }}
 
 
@@ -155,9 +155,9 @@ runs:
       run: ${{ github.action_path }}/scripts/restore/sync_remote_branches.sh
 
     - name: Suspend Repository Operations for Safe Restore
-      if: ${{ inputs.action == 'restore' && inputs.pause_actions=='true' }}
+      if: ${{ inputs.action == 'restore' && inputs.suspend_actions=='true' }}
       shell: bash
-      run: ${{ github.action_path }}/scripts/restore/pause_actions.sh
+      run: ${{ github.action_path }}/scripts/restore/suspend_actions.sh
       env:
         GH_TOKEN: ${{ inputs.icredible_repository_restore_token }}
 
@@ -170,7 +170,7 @@ runs:
         GITHUB_DEFAULT_TOKEN: ${{ github.token }}
         
     - name: Restore Repository Operations After Completion
-      if: ${{ always() && inputs.action == 'restore' && inputs.pause_actions=='true' }}
+      if: ${{ always() && inputs.action == 'restore' && inputs.suspend_actions=='true' }}
       shell: bash
       run: ${{ github.action_path }}/scripts/restore/resume_actions.sh
       env:

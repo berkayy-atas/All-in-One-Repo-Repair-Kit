@@ -6,56 +6,56 @@ echo "Restoring original repository settings..."
 MAX_RETRIES=3
 RETRY_DELAY=5
 
-if [ ! -f /tmp/$ACTIONS_PERM ]; then
+if [ ! -f $ACTIONS_PERMISSIONS_FILE_PATH ]; then
   echo "Warning: Original permissions file not found. Re-enabling Actions with default settings."
   gh api \
     --method PUT \
     repos/$GITHUB_REPOSITORY/actions/permissions \
     -F 'enabled=true'
 else
-  original_perms=$(cat /tmp/$ACTIONS_PERM)
-  
-  # İzinleri restore et
-  gh api \
+  original_perms=$(cat $ACTIONS_PERMISSIONS_FILE_PATH)
+    gh api \
     --method PUT \
     repos/$GITHUB_REPOSITORY/actions/permissions \
-    --input /tmp/$ACTIONS_PERM
+    --input $ACTIONS_PERMISSIONS_FILE_PATH
   
-  # İzinlerin doğru şekilde uygulandığını kontrol et
   for attempt in $(seq 1 $MAX_RETRIES); do
-    echo "Checking if permissions were restored correctly (attempt $attempt/$MAX_RETRIES)..."
     
-    # Mevcut izinleri al
     current_perms=$(gh api repos/$GITHUB_REPOSITORY/actions/permissions --jq '.')
     
-    # Beklenen izinleri al (JSON formatında)
     expected_enabled=$(echo "$original_perms" | jq -r '.enabled')
     expected_allowed_actions=$(echo "$original_perms" | jq -r '.allowed_actions')
-    
-    # Mevcut izinleri kontrol et
+    expected_sha_pinning_required=$(echo "$original_perms" | jq -r '.sha_pinning_required')
+
     current_enabled=$(echo "$current_perms" | jq -r '.enabled')
     current_allowed_actions=$(echo "$current_perms" | jq -r '.allowed_actions')
+    current_sha_pinning_required=$(echo "$current_perms" | jq -r '.sha_pinning_required')
+
     
     if [ "$current_enabled" = "$expected_enabled" ] && \
-       [ "$current_allowed_actions" = "$expected_allowed_actions" ]; then
+       [ "$current_allowed_actions" = "$expected_allowed_actions" ] && \
+       [ "$current_sha_pinning_required" = "$expected_sha_pinning_required" ]; then
       echo "✓ Permissions successfully restored:"
       echo "  - Enabled: $current_enabled"
       echo "  - Allowed actions: $current_allowed_actions"
+      echo "  - Allowed actions: $current_sha_pinning_required"
       break
     else
       echo "✗ Permissions mismatch detected:"
       echo "  Expected - Enabled: $expected_enabled, Allowed actions: $expected_allowed_actions"
       echo "  Current  - Enabled: $current_enabled, Allowed actions: $current_allowed_actions"
+      echo "  Current  - Enabled: $current_sha_pinning_required, Allowed actions: $expected_sha_pinning_required"
+
       
       if [ $attempt -lt $MAX_RETRIES ]; then
         echo "Retrying in $RETRY_DELAY seconds..."
         sleep $RETRY_DELAY
         
-        # Tekrar restore etmeyi dene
+        # try again restore perm
         gh api \
           --method PUT \
           repos/$GITHUB_REPOSITORY/actions/permissions \
-          --input /tmp/$ACTIONS_PERM
+          --input $ACTIONS_PERMISSIONS_FILE_PATH
       else
         echo "Error: Failed to restore permissions after $MAX_RETRIES attempts."
         echo "Please check your GitHub token permissions and try again."
