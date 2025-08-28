@@ -21,5 +21,5 @@ for branch in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
 done
 
 git push "$REMOTE_URL" --tags --force
-
+sleep 10
 echo "::notice title=Success!::Repository restored successfully"
