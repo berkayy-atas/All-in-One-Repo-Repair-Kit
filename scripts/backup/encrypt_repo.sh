@@ -1,4 +1,5 @@
 #!/bin/bash
+git branch -r
 REPO_NAME=$(basename "$GITHUB_REPOSITORY")
 ENC_FILE_NAME="$REPO_NAME.tar.zst.enc"
 HASHED_PASSWORD=$(echo -n "$ICREDIBLE_ENCRYPTION_PASSWORD" | openssl dgst -sha256 | awk '{print $2}')
