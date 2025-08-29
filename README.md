@@ -54,7 +54,7 @@ This step is required if you want to restore the .github/workflows directory in 
 
 ## 🔄 Version-Specific Backup & Restore Requirements
 
-**CRITICAL**: You should restore your backup using **the same version** of iCredible Git Security Action that was used to create the backup. 
+**CRITICAL**: To ensure successful restoration of your backups, it is strongly recommended to use the exact same version of iCredible Git Security Action for both backup and restore operations.
 
 ## 🔧 Technical Rationale
 
@@ -151,7 +151,7 @@ jobs:
             suspend_actions: 'true'
             action: 'restore'
 ```
-# 🔑 Personal Access Token (PAT) Setup Guide for Repository Restoration
+# 🔑 Personal Access Token (PAT) Setup Guide for Repository Restore
 
 ## Create a Personal Access Token
 1. Log in to your GitHub account
@@ -166,7 +166,7 @@ Note: "iCredible-Git-Security-Restore-Token"  # Example name
 Expiration: 30 days                           # Recommended duration
 Permissions:
 - repo       # Select ALL repository permissions
-- workflow   # Required for workflow restoration
+- workflow   # Required for workflow restore
 ```
 
 ## Add Token to Repository Secrets
