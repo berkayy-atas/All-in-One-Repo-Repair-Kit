@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 cd repo-mirror
-git branch -r
 
 for remote_branch in $(git branch -r | grep -v '\->'); do
     # Clean up the branch name (remove origin/ prefix)
