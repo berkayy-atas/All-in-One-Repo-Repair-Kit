@@ -59,7 +59,6 @@ runs:
         SUSPEND_ACTIONS: ${{ inputs.suspend_actions }}
         ACTION: ${{ inputs.action }}
 
-
     - name: Initialize Environment Variables
       shell: bash
       run: ${{ github.action_path }}/scripts/common/set_globals.sh
