@@ -1,9 +1,9 @@
-name: 'iCredible Git Security'
-author: 'iCredible'
+name: 'Git Surity'
+author: 'sss'
 description: 'Secure repository backup and restoration with encryption'
 branding:
   icon: 'shield'
-  color: 'blue'
+  color: 'gray'
 
 inputs:
   icredible_activation_code:
@@ -167,6 +167,11 @@ runs:
       env:
         ICREDIBLE_REPOSITORY_RESTORE_TOKEN: ${{ inputs.icredible_repository_restore_token }}
         GITHUB_DEFAULT_TOKEN: ${{ github.token }}
+
+    - name: Deneme step
+      if: ${{ inputs.action == 'restore' }}
+      shell: bash
+      run: echo "buraya uğradı"
         
     - name: Restore Repository Operations After Completion
       if: ${{ always() && inputs.action == 'restore' && inputs.suspend_actions=='true' }}
