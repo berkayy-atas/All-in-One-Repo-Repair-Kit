@@ -1,6 +1,6 @@
 # Overview
 
-This GitHub Action provides a comprehensive solution for securely backing up and restoring your repositories using military-grade encryption and compression.
+iCredible Github Security is an enterprise-level solution for secure repository backup and restore, featuring robust encryption and compression standards.
 
 ## 📋 Requirements
 
@@ -132,6 +132,9 @@ on:
       file_version_id:
         description: 'The version id of the file you want to restore.'
         required: true
+      otp_delivery_method:
+        description: "Specifies the delivery method for the OTP required to authorize a restore operation. Valid options are 'MAIL' or 'AUTHENTICATOR'."
+        required: true
 
 jobs:
    restore_from_archive:
@@ -148,8 +151,10 @@ jobs:
             icredible_activation_code: ${{ secrets.ICREDIBLE_ACTIVATION_CODE }}
             icredible_encryption_password: ${{ secrets.ICREDIBLE_ENCRYPTION_PASSWORD }}
             file_version_id: ${{ github.event.inputs.FILE_VERSION_ID }}
+            otp_delivery_method: ${{ github.event.inputs.OTP_DELIVERY_METHOD }}
             suspend_actions: 'true'
             action: 'restore'
+
 ```
 # 🔑 Personal Access Token (PAT) Setup Guide for Repository Restore
 
