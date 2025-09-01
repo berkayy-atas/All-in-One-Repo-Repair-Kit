@@ -1,6 +1,6 @@
-name: 'iCredible Git Security'
-author: 'iCredible'
-description: 'iCredible Git Security: Enterprise-grade encrypted backups with compression and tamper-proof restoration.'
+name: 'iCredible Git Secuy'
+author: 'iCrible'
+description: 'iCredGit Security: Enterprise-grade encrypted backups with compression and tamper-proof restoration.'
 branding:
   icon: 'shield'
   color: 'red'
