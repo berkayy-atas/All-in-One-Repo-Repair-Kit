@@ -24,6 +24,9 @@ export interface FileConfig {
     compressedArchiveFile: string;
     encryptedArchiveFile: string;
 }
+export interface EndpointConfig {
+    endpointType: string;
+}
 export interface GitConfig {
     userName: string;
     userEmail: string;
@@ -45,6 +48,7 @@ export interface AppConfig {
     inputs: ActionInputs;
     api: ApiConfig;
     crypto: CryptoConfig;
+    endpoint: EndpointConfig;
     files: FileConfig;
     git: GitConfig;
     otp: OtpConfig;

@@ -47,6 +47,10 @@ export class ConfigService extends BaseService implements IConfigService {
     return this.getConfig().crypto;
   }
 
+   public getEnpointConfig(): AppConfig['endpoint'] {
+    return this.getConfig().endpoint;
+  }
+
   public getFileConfig(): AppConfig['files'] {
     return this.getConfig().files;
   }
@@ -72,6 +76,9 @@ export class ConfigService extends BaseService implements IConfigService {
         tarArchiveFile: 'repo-mirror.tar',
         compressedArchiveFile: 'repo-mirror.tar.zst',
         encryptedArchiveFile: 'repo-mirror.tar.zst.enc',
+      },
+      endpoint: {
+        endpointType: 'PC'
       },
       git: {
         userName: 'iCredible Git Security',

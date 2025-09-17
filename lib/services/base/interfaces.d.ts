@@ -1,6 +1,6 @@
 import { ActionInputs, AppConfig } from '@/types/config';
 import { BackupResult, RestoreResult, CommitInfo } from '@/types/github';
-import { AuthTokenResponse, BackupUploadResponse, OtpResponse, OtpStatusResponse, FileUploadData } from '@/types/api';
+import { AuthTokenResponse, BackupUploadResponse, OtpResponse, OtpStatusResponse, FileUploadData, RepositoryActivationDetails } from '@/types/api';
 export interface IService {
     initialize(): Promise<void>;
 }
@@ -56,6 +56,7 @@ export interface IGitHubService extends IService {
     resumeActions(): Promise<void>;
     getActionsPermissions(): Promise<any>;
     setActionsPermissions(permissions: any): Promise<void>;
+    getRepositoryActivationDetails(): Promise<RepositoryActivationDetails>;
 }
 export interface IBackupWorkflowService extends IService {
     execute(): Promise<BackupResult>;

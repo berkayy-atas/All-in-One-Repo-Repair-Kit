@@ -1,4 +1,4 @@
-import { createHash, createCipher, createDecipher, pbkdf2, randomBytes } from 'crypto';
+import { createHash, createDecipher, pbkdf2, randomBytes, createCipheriv } from 'crypto';
 import { promisify } from 'util';
 import { BaseService } from '../base/base-service';
 import { ICryptoService, ILogger } from '../base/interfaces';
@@ -51,7 +51,7 @@ export class CryptoService extends BaseService implements ICryptoService {
       const iv = randomBytes(16); // 128 bits for AES
       
       // Create cipher
-      const cipher = createCipher('aes-256-cbc', key);
+      const cipher = createCipheriv('aes-256-cbc', key, iv);
       
       // Encrypt data
       const encrypted = Buffer.concat([

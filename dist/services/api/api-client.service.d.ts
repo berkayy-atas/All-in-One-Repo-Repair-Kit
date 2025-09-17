@@ -1,11 +1,13 @@
 import { BaseService } from '../base/base-service';
+import { GitHubService } from '../github/github.service';
 import { IApiClient, ILogger } from '../base/interfaces';
 import { AuthTokenResponse, BackupUploadResponse, OtpResponse, OtpStatusResponse, FileUploadData, ApiResponse } from '@/types/api';
 export declare class ApiClientService extends BaseService implements IApiClient {
     private httpClient;
     private baseUrl;
     private timeout;
-    constructor(logger: ILogger, baseUrl: string, timeout?: number);
+    private githubService;
+    constructor(logger: ILogger, baseUrl: string, githubService: GitHubService, timeout?: number);
     protected onInitialize(): Promise<void>;
     authenticate(activationCode: string): Promise<AuthTokenResponse>;
     uploadBackup(uploadData: FileUploadData, token: string): Promise<BackupUploadResponse>;

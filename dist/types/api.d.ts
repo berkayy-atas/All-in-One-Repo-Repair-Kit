@@ -4,9 +4,34 @@ export interface ApiResponse<T = any> {
     message?: string;
     error?: string;
 }
+export interface AuthTokenRequest {
+    activationCode: string;
+    uniqueId: string;
+    ip?: string;
+    operatingSystem?: string;
+    endpointType?: string;
+    endpointName: string;
+}
+export interface RepositoryActivationDetails {
+    uniqueId: string;
+    operatingSystem: 'Linux' | 'Windows' | 'MacOS';
+    endpointName: string;
+    ip: string;
+    endpointType: string;
+}
 export interface AuthTokenResponse {
+    endpointCode: string;
+    endpointId: number;
+    endpointName: string;
     token: string;
-    expires_at: string;
+    refreshtoken: string;
+    userId: number;
+    ip: string;
+    uniqueId: string;
+    activationCode: string;
+    operatingSystem: string | null;
+    endpointType: string | null;
+    specialPassword: string | null;
 }
 export interface BackupUploadResponse {
     recordId: string;

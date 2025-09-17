@@ -10,6 +10,7 @@ export declare class ConfigService extends BaseService implements IConfigService
     getConfig(): AppConfig;
     getApiConfig(): AppConfig['api'];
     getCryptoConfig(): AppConfig['crypto'];
+    getEnpointConfig(): AppConfig['endpoint'];
     getFileConfig(): AppConfig['files'];
     private buildConfig;
     private getInputsFromEnvironment;

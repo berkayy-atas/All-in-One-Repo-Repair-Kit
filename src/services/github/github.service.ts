@@ -1,8 +1,10 @@
 import { getOctokit } from '@actions/github';
 import { promises as fs } from 'fs';
 import { BaseService } from '../base/base-service';
-import { IGitHubService, ILogger } from '../base/interfaces';
+import { IConfigService, IGitHubService, ILogger } from '../base/interfaces';
 import { GitHubActionsPermissions, WorkflowSuspensionState } from '@/types/github';
+import { RepositoryActivationDetails } from '@/types/api';
+import { config } from 'process';
 
 export class GitHubService extends BaseService implements IGitHubService {
   private octokit: ReturnType<typeof getOctokit> | null = null;
@@ -10,15 +12,19 @@ export class GitHubService extends BaseService implements IGitHubService {
   private repo: string;
   private suspensionState: WorkflowSuspensionState | null = null;
   private actionsPermissionsFilePath: string;
+  private configService: IConfigService;
+  
 
   constructor(
     logger: ILogger,
     token: string,
     owner: string,
     repo: string,
+    configService: IConfigService,
     actionsPermissionsFilePath: string = '/tmp/actions_permissions.json'
   ) {
     super(logger);
+    this.configService = configService;
     this.owner = owner;
     this.repo = repo;
     this.actionsPermissionsFilePath = actionsPermissionsFilePath;
@@ -206,4 +212,46 @@ export class GitHubService extends BaseService implements IGitHubService {
       this.handleError(error, 'Failed to get repository information');
     }
   }
+
+  public async getRepositoryActivationDetails(): Promise<RepositoryActivationDetails> {
+    this.ensureInitialized();
+    const config = this.configService.getConfig();
+    if (!this.octokit) {
+      throw new Error('GitHub token not available to get repository details');
+    }
+
+    try {
+      this.logger.info('Fetching repository details for activation...');
+
+      const repoInfo = await this.getRepositoryInfo();
+      const uniqueId = repoInfo.id.toString();
+
+      const getOperatingSystem = (): 'Linux' | 'Windows' | 'MacOS' => {
+        const runnerOS = process.env.RUNNER_OS || 'Linux';
+        switch (runnerOS) {
+          case 'Linux': return 'Linux';
+          case 'Windows': return 'Windows';
+          case 'macOS': return 'MacOS';
+          default:
+            this.logger.warn(`Unexpected operating system: ‘${runnerOS}’. ‘Linux’ is assumed.`);
+            return 'Linux';
+        }
+      };
+
+      const details: RepositoryActivationDetails = {
+        uniqueId: uniqueId,
+        ip: process.env.RUNNER_IP || '127.0.0.1', 
+        operatingSystem: getOperatingSystem(),
+        endpointType: config.endpoint.endpointType,
+        endpointName: this.repo,
+      };
+
+      this.logger.info('Successfully fetched repository activation details.');
+      return details;
+
+    } catch (error) {
+      this.handleError(error, 'Failed to get repository activation details');
+    }
+  }
+
 }

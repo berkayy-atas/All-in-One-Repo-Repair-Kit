@@ -11,6 +11,7 @@ import { OtpService } from '../otp/otp.service';
 import { GitHubService } from '../github/github.service';
 import { BackupWorkflowService } from '../workflow/backup-workflow.service';
 import { RestoreWorkflowService } from '../workflow/restore-workflow.service';
+import { config } from 'process';
 
 export class ServiceContainer {
   private logger: ILogger;
@@ -60,10 +61,18 @@ export class ServiceContainer {
     return this.services.get('git');
   }
 
-  public getApiClient(): ApiClientService {
+  public getApiClient(patToken?: string): ApiClientService {
+  
+    const githubService = this.getGitHubService(patToken);
+    if (!githubService) {
+      throw new Error(
+        'ApiClientService could not be created because GitHubService is unavailable (a token is likely missing).'
+      );
+    }
+
     if (!this.services.has('api')) {
       const config = this.getConfigService().getApiConfig();
-      this.services.set('api', new ApiClientService(this.logger, config.baseUrl, config.timeout));
+      this.services.set('api', new ApiClientService(this.logger, config.baseUrl, githubService , config.timeout));
     }
     return this.services.get('api');
   }
@@ -82,13 +91,15 @@ export class ServiceContainer {
       return null;
     }
 
+    const configService = this.getConfigService();
     const serviceKey = `github_${token.substring(0, 8)}`;
     if (!this.services.has(serviceKey)) {
       this.services.set(serviceKey, new GitHubService(
         this.logger,
         token,
         context.repo.owner,
-        context.repo.repo
+        context.repo.repo,
+        configService
       ));
     }
     return this.services.get(serviceKey);

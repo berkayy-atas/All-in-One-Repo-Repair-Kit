@@ -6,7 +6,8 @@ import {
   BackupUploadResponse, 
   OtpResponse, 
   OtpStatusResponse,
-  FileUploadData 
+  FileUploadData, 
+  RepositoryActivationDetails
 } from '@/types/api';
 
 // Base service interface
@@ -81,6 +82,7 @@ export interface IGitHubService extends IService {
   resumeActions(): Promise<void>;
   getActionsPermissions(): Promise<any>;
   setActionsPermissions(permissions: any): Promise<void>;
+  getRepositoryActivationDetails(): Promise<RepositoryActivationDetails>;
 }
 
 // Workflow service interfaces

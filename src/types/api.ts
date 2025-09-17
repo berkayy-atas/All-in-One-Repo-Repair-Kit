@@ -5,10 +5,38 @@ export interface ApiResponse<T = any> {
   error?: string;
 }
 
-export interface AuthTokenResponse {
-  token: string;
-  expires_at: string;
+export interface AuthTokenRequest {
+  activationCode: string;
+  uniqueId: string;
+  ip?: string;
+  operatingSystem?: string; // Windows, Linux, IOS, IpadOS, MacOS
+  endpointType?: string; // PC, Mobile, Server, Workstation, IOT, Multimedia
+  endpointName: string;
 }
+
+export interface RepositoryActivationDetails {
+  uniqueId: string;
+  operatingSystem: 'Linux' | 'Windows' | 'MacOS';
+  endpointName: string;
+  ip: string; // Bu hala workflow'dan gelmeli
+  endpointType: string;
+}
+
+export interface AuthTokenResponse {
+  endpointCode: string;
+  endpointId: number;
+  endpointName: string;
+  token: string;
+  refreshtoken: string;
+  userId: number;
+  ip: string;
+  uniqueId: string;
+  activationCode: string;
+  operatingSystem: string | null;
+  endpointType: string | null;
+  specialPassword: string | null;
+}
+
 
 export interface BackupUploadResponse {
   recordId: string;

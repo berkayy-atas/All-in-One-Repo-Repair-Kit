@@ -28,6 +28,10 @@ export interface FileConfig {
   encryptedArchiveFile: string;
 }
 
+export interface EndpointConfig {
+  endpointType: string; // PC, Mobile, Server, Workstation, IOT, Multimedia
+}
+
 export interface GitConfig {
   userName: string;
   userEmail: string;
@@ -52,6 +56,7 @@ export interface AppConfig {
   inputs: ActionInputs;
   api: ApiConfig;
   crypto: CryptoConfig;
+  endpoint: EndpointConfig;
   files: FileConfig;
   git: GitConfig;
   otp: OtpConfig;

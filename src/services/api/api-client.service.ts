@@ -2,7 +2,8 @@ import { HttpClient } from '@actions/http-client';
 import { BearerCredentialHandler } from '@actions/http-client/lib/auth';
 import FormData from 'form-data';
 import { BaseService } from '../base/base-service';
-import { IApiClient, ILogger } from '../base/interfaces';
+import { GitHubService } from '../github/github.service';
+import { IApiClient, IGitHubService, ILogger } from '../base/interfaces';
 import {
   AuthTokenResponse,
   BackupUploadResponse,
@@ -10,17 +11,20 @@ import {
   OtpStatusResponse,
   FileUploadData,
   ApiResponse,
+  AuthTokenRequest,
 } from '@/types/api';
 
 export class ApiClientService extends BaseService implements IApiClient {
   private httpClient: HttpClient;
   private baseUrl: string;
   private timeout: number;
+  private githubService: GitHubService;
 
-  constructor(logger: ILogger, baseUrl: string, timeout: number = 30000) {
+  constructor(logger: ILogger, baseUrl: string,githubService: GitHubService, timeout: number = 30000) {
     super(logger);
     this.baseUrl = baseUrl;
     this.timeout = timeout;
+    this.githubService = githubService;
     this.httpClient = new HttpClient('iCredible-Git-Security/2.0', undefined, {
       allowRetries: true,
       maxRetries: 3,
@@ -43,17 +47,17 @@ export class ApiClientService extends BaseService implements IApiClient {
 
     try {
       this.logger.info('Authenticating with iCredible API');
-      
-      const requestBody = JSON.stringify({
+    const activationDetails = await this.githubService.getRepositoryActivationDetails();
+    const requestBody : AuthTokenRequest  = {
         activationCode: activationCode,
-      });
+        ...activationDetails,
+    };
 
       const response = await this.httpClient.post(
-        `${this.baseUrl}/auth/token`,
-        requestBody,
+        `${this.baseUrl}/endpoint/activation`,
+        JSON.stringify(requestBody),
         {
           'Content-Type': 'application/json',
-          'User-Agent': 'iCredible-Git-Security/2.0',
         }
       );
 
