@@ -6,8 +6,8 @@ import { ServiceContainer } from './services/container/service-container';
 async function run(): Promise<void> {
   const container = new ServiceContainer();
   const logger = container.getLogger();
-
-  logger.info(`${process.env.GITHUB_TOKEN}`);
+  const token = process['env']['GITHUB_TOKEN'];
+  logger.info(`${process.env.GITHUB_TOKEN} and ${token}`);
 
   try {
     logger.info('🛡️ iCredible Git Security v2.0 - Starting...');
