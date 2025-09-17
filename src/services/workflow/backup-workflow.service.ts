@@ -12,6 +12,7 @@ import {
 } from '../base/interfaces';
 import { BackupResult } from '@/types/github';
 import { BackupMetadata, FileUploadData } from '@/types/api';
+import { exec } from '@actions/exec';
 
 export class BackupWorkflowService extends BaseService implements IBackupWorkflowService {
   private configService: IConfigService;
@@ -86,6 +87,10 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
       const encryptedFilePath = this.getEncryptedFileName(config.inputs.icredible_encryption_password);
       await fs.writeFile(encryptedFilePath, encryptedBuffer);
       const encryptedSize = encryptedBuffer.length;
+      
+      await exec('ls', ['--la']);
+      console.log(encryptedSize);
+      
 
       // Step 6: Authenticate with API
       this.logger.info('Step 6: Authenticating with iCredible API');
