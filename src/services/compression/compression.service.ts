@@ -57,25 +57,19 @@ export class CompressionService extends BaseService implements ICompressionServi
     }
   }
 
-  public async compressWithZstd(inputPath: string, outputPath: string): Promise<number> {
+    public async compressWithZstd(inputPath: string, outputPath: string): Promise<number> {
     this.ensureInitialized();
-
     try {
       this.logger.info(`Compressing ${inputPath} with zstd to ${outputPath}`);
       
-      // Use dynamic import for zstd-codec to handle potential module loading issues
-      const zstd = await this.loadZstdModule();
+      // Düzeltilmiş loader fonksiyonu artık doğru nesneyi döndürecek
+      const zstdSimple = await this.loadZstdModule();
       
-      await exec('ls', ['-la']);
-      console.log(inputPath);
-      
-      // Read input file
       const inputBuffer = await fs.readFile(inputPath);
       
-      // Compress with zstd level 10 (matching bash script)
-      const compressedBuffer = zstd.compress(inputBuffer, 10);
+      // Hata ortadan kalkacak çünkü zstdSimple artık tanımlı
+      const compressedBuffer = zstdSimple.compress(inputBuffer, 10);
       
-      // Write compressed file
       await fs.writeFile(outputPath, compressedBuffer);
       
       const compressedSize = compressedBuffer.length;
@@ -177,17 +171,21 @@ export class CompressionService extends BaseService implements ICompressionServi
   }
 
   private async loadZstdModule(): Promise<any> {
-    try {
-      // Dynamic import to handle module loading gracefully
-      let simple;
-      const ZstdCodec = await require('zstd-codec').ZstdCodec;
-      ZstdCodec.run((zstd: { Simple: new () => any; Streaming: new () => any; }) => {
-          simple = new zstd.Simple();
-          const streaming = new zstd.Streaming();
-      });
-      return simple;
-    } catch (error) {
-      throw new Error('zstd-codec module not available. Please install it with: npm install zstd-codec');
-    }
+    return new Promise((resolve, reject) => {
+      try {
+        // require('zstd-codec') dinamik olarak ZstdCodec'i getirir
+        const { ZstdCodec } = require('zstd-codec');
+        
+        // Kütüphanenin asenkron başlatmasını yönet
+        ZstdCodec.run((zstd: { Simple: new () => any; }) => {
+          const simple = new zstd.Simple();
+          // Promise'i 'simple' nesnesi ile başarıyla tamamla
+          resolve(simple);
+        });
+      } catch (error) {
+        // Hata durumunda Promise'i reddet
+        reject(new Error('zstd-codec module not available. Please install it with: npm install zstd-codec'));
+      }
+    });
   }
 }
