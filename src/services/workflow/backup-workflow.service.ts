@@ -77,9 +77,10 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
 
       // Step 5: Encrypt the compressed archive
       this.logger.info('Step 5: Encrypting compressed archive');
-      const encryptedBuffer = await this.encryptArchive(
-        config.files.compressedArchiveFile,
-        config.inputs.icredible_encryption_password
+      const compressedFileBuffer = await fs.readFile(config.files.compressedArchiveFile);
+      const encryptedBuffer = await this.cryptoService.encrypt(
+      compressedFileBuffer,
+      config.inputs.icredible_encryption_password
       );
 
       const encryptedFilePath = this.getEncryptedFileName(config.inputs.icredible_encryption_password);

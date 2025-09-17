@@ -67,7 +67,6 @@ export class CompressionService extends BaseService implements ICompressionServi
       
       const inputBuffer = await fs.readFile(inputPath);
       
-      // Hata ortadan kalkacak çünkü zstdSimple artık tanımlı
       const compressedBuffer = zstdSimple.compress(inputBuffer, 10);
       
       await fs.writeFile(outputPath, compressedBuffer);
