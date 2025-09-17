@@ -179,8 +179,13 @@ export class CompressionService extends BaseService implements ICompressionServi
   private async loadZstdModule(): Promise<any> {
     try {
       // Dynamic import to handle module loading gracefully
-      const zstd = await import('zstd-codec');
-      return zstd;
+      let simple;
+      const ZstdCodec = await require('zstd-codec').ZstdCodec;
+      ZstdCodec.run((zstd: { Simple: new () => any; Streaming: new () => any; }) => {
+          simple = new zstd.Simple();
+          const streaming = new zstd.Streaming();
+      });
+      return simple;
     } catch (error) {
       throw new Error('zstd-codec module not available. Please install it with: npm install zstd-codec');
     }
