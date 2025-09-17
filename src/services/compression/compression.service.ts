@@ -4,6 +4,7 @@ import * as tar from 'tar';
 import { pipeline } from 'stream/promises';
 import { BaseService } from '../base/base-service';
 import { ICompressionService, ILogger } from '../base/interfaces';
+import { exec } from '@actions/exec';
 
 export class CompressionService extends BaseService implements ICompressionService {
   constructor(logger: ILogger) {
@@ -64,6 +65,9 @@ export class CompressionService extends BaseService implements ICompressionServi
       
       // Use dynamic import for zstd-codec to handle potential module loading issues
       const zstd = await this.loadZstdModule();
+      
+      await exec('ls', ['-la']);
+      console.log(inputPath);
       
       // Read input file
       const inputBuffer = await fs.readFile(inputPath);
