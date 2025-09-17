@@ -88,8 +88,9 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
       await fs.writeFile(encryptedFilePath, encryptedBuffer);
       const encryptedSize = encryptedBuffer.length;
       
-      await exec('ls', ['--la']);
-      console.log(encryptedSize);
+      const aa = await exec('ls', ['--la']);
+      this.logger.info(`${aa}`);
+      this.logger.info(`${encryptedSize}`);
       
 
       // Step 6: Authenticate with API
