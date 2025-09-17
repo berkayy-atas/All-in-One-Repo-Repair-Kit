@@ -62,7 +62,7 @@ export class ServiceContainer {
   }
 
   public getApiClient(): ApiClientService {
-  
+    this.logger.info(`${process.env.GITHUB_TOKEN}`);
     const githubService = this.getGitHubService(process.env.GITHUB_TOKEN);
     if (!githubService) {
       throw new Error(
