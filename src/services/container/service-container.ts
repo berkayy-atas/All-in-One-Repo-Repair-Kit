@@ -61,9 +61,9 @@ export class ServiceContainer {
     return this.services.get('git');
   }
 
-  public getApiClient(patToken?: string): ApiClientService {
+  public getApiClient(): ApiClientService {
   
-    const githubService = this.getGitHubService(patToken);
+    const githubService = this.getGitHubService(process.env.GITHUB_TOKEN);
     if (!githubService) {
       throw new Error(
         'ApiClientService could not be created because GitHubService is unavailable (a token is likely missing).'

@@ -19,7 +19,7 @@ export declare class ServiceContainer {
     getCryptoService(): CryptoService;
     getCompressionService(): CompressionService;
     getGitService(): GitService;
-    getApiClient(patToken?: string): ApiClientService;
+    getApiClient(): ApiClientService;
     getOtpService(): OtpService;
     getGitHubService(token?: string): GitHubService | null;
     getBackupWorkflowService(): BackupWorkflowService;
