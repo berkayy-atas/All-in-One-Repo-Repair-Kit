@@ -1,0 +1,18 @@
+import { BaseService } from '../base/base-service';
+import { IGitService, ILogger } from '../base/interfaces';
+import { CommitInfo } from '@/types/github';
+export declare class GitService extends BaseService implements IGitService {
+    constructor(logger: ILogger);
+    protected onInitialize(): Promise<void>;
+    createMirrorClone(sourceDir: string, targetDir: string): Promise<void>;
+    getCurrentCommitInfo(): Promise<CommitInfo>;
+    configureGit(userName: string, userEmail: string): Promise<void>;
+    setRemoteUrl(repoPath: string, remoteUrl: string): Promise<void>;
+    pushMirror(repoPath: string): Promise<void>;
+    pushAllBranches(repoPath: string): Promise<void>;
+    syncRemoteBranches(repoPath: string): Promise<void>;
+    filterWorkflowDirectory(repoPath: string): Promise<void>;
+    hasCommits(repoPath?: string): Promise<boolean>;
+    getCurrentBranch(repoPath?: string): Promise<string>;
+}
+//# sourceMappingURL=git.service.d.ts.map
