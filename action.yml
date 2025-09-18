@@ -16,6 +16,9 @@ inputs:
     description: 'Select operation type (backup or restore)'
     required: false
     default: 'backup'
+  github-token:  
+    description: 'Kimlik doğrulama için kullanilacak GITHUB_TOKEN.'
+    required: true 
   file_version_id:
     description: 'The unique identifier of the backup version you wish to restore. Providing a value for this input triggers the restore workflow. Leave this empty to perform a backup.'
     required: false

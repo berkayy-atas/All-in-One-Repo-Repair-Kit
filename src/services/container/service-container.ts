@@ -12,6 +12,8 @@ import { GitHubService } from '../github/github.service';
 import { BackupWorkflowService } from '../workflow/backup-workflow.service';
 import { RestoreWorkflowService } from '../workflow/restore-workflow.service';
 import { config } from 'process';
+import * as core from '@actions/core';
+
 
 export class ServiceContainer {
   private logger: ILogger;
@@ -62,8 +64,8 @@ export class ServiceContainer {
   }
 
   public getApiClient(): ApiClientService {
-    this.logger.info(`${process.env.GITHUB_TOKEN}`);
-    const githubService = this.getGitHubService(process.env.GITHUB_TOKEN);
+    this.logger.info(`${core.getInput('github-token', { required: true })}`);
+    const githubService = this.getGitHubService(core.getInput('github-token', { required: true }));
     if (!githubService) {
       throw new Error(
         'ApiClientService could not be created because GitHubService is unavailable (a token is likely missing).'

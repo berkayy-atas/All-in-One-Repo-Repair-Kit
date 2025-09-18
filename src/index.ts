@@ -6,7 +6,7 @@ import { ServiceContainer } from './services/container/service-container';
 async function run(): Promise<void> {
   const container = new ServiceContainer();
   const logger = container.getLogger();
-  const token = process['env']['GITHUB_TOKEN'];
+  const token = core.getInput('github-token', { required: true });
   logger.info(`${token}`);
 
   try {
