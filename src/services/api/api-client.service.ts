@@ -1,6 +1,7 @@
 import { HttpClient } from '@actions/http-client';
 import { BearerCredentialHandler } from '@actions/http-client/lib/auth';
 import FormData from 'form-data';
+import axios from 'axios';
 import { BaseService } from '../base/base-service';
 import { GitHubService } from '../github/github.service';
 import { IApiClient, IGitHubService, ILogger } from '../base/interfaces';
@@ -79,6 +80,7 @@ export class ApiClientService extends BaseService implements IApiClient {
       this.handleError(error, 'Failed to authenticate with iCredible API');
     }
   }
+  // ... constructor ve diğer metodlar aynı kalır ...
 
   public async uploadBackup(uploadData: FileUploadData, token: string): Promise<BackupUploadResponse> {
     this.ensureInitialized();
@@ -86,15 +88,15 @@ export class ApiClientService extends BaseService implements IApiClient {
     try {
       this.logger.info(`Uploading backup file: ${uploadData.fileName}`);
 
-      // 1. ADIM: Sunucunun beklediği modele uygun bir metadata nesnesi oluştur.
       const requestData = {
+        // PascalCase anahtarları kullanmaya devam ediyoruz, bu doğru bir pratik.
         Size: uploadData.size,
         CompressedFileSize: uploadData.compressedFileSize,
         Attributes: uploadData.attributes,
         FileName: uploadData.fileName,
+        FullPath: uploadData.fullPath,
         CompressionEngine: uploadData.compressionEngine,
         CompressionLevel: uploadData.compressionLevel,
-        FullPath: uploadData.fullPath,
         EncryptionType: uploadData.encryptionType,
         RevisionType: uploadData.revisionType,
         MetaData: {
@@ -112,50 +114,61 @@ export class ApiClientService extends BaseService implements IApiClient {
         }
       };
 
-      // 2. ADIM: Bu metadata nesnesini bir JSON metnine çevir.
       const requestJson = JSON.stringify(requestData);
 
-      // 3. ADIM: FormData'yı sadece iki bölümle oluştur: dosya ve JSON metni.
       const form = new FormData();
       form.append('file', uploadData.file, {
         filename: uploadData.fileName,
         contentType: 'application/octet-stream',
       });
-      
       form.append('request', requestJson, {
         contentType: 'application/json'
       });
-
-      // 4. ADIM: İsteği gönder.
+      
       const headers = {
         'Authorization': `Bearer ${token}`,
         'User-Agent': 'iCredible-Git-Security/2.0',
-        ...form.getHeaders(),
+        ...form.getHeaders(), // axios, form-data kütüphanesiyle sorunsuz çalışır
       };
 
-      const response = await this.httpClient.post(
+      // @actions/http-client yerine axios kullanarak POST isteği yap
+      const response = await axios.post(
         `${this.baseUrl}/backup/shield`,
-        form.getBuffer().toString(),
-        headers
+        form, // axios, FormData stream'ini doğal olarak destekler
+        {
+          headers: headers,
+          maxContentLength: Infinity, // Büyük dosyalar için limitleri kaldır
+          maxBodyLength: Infinity,
+        }
       );
 
-      // ... fonksiyonun geri kalanı ...
-      if (response.message.statusCode !== 200) {
-        const errorBody = await response.readBody();
-        throw new Error(`Upload failed: HTTP ${response.message.statusCode} - ${errorBody}`);
-      }
-      const responseBody = await response.readBody();
-      const apiResponse: ApiResponse<BackupUploadResponse> = JSON.parse(responseBody);
+      // axios'ta başarılı cevap doğrudan response.data içinde gelir
+      const apiResponse: ApiResponse<BackupUploadResponse> = response.data;
+
       if (!apiResponse.success) {
+        // axios'ta hata yönetimi genellikle try-catch bloğunun catch kısmında yapılır
+        // ama API'niz 200 OK içinde { success: false } dönebileceği için bu kontrol kalmalı
         throw new Error(`Upload failed: ${apiResponse.error || apiResponse.message}`);
       }
+
       this.logger.info('Backup uploaded successfully');
       return apiResponse.data;
 
     } catch (error) {
-      this.handleError(error, 'Failed to upload backup');
+      // axios'un hata nesnesi daha zengindir, sunucudan gelen cevabı içerir
+      if (axios.isAxiosError(error) && error.response) {
+        // Sunucudan bir cevap geldiyse (422, 500 vb.), o cevabı logla
+        const serverError = JSON.stringify(error.response.data);
+        this.handleError(
+          new Error(`Upload failed: HTTP ${error.response.status} - ${serverError}`),
+          'Failed to upload backup'
+        );
+      } else {
+        // Ağ hatası gibi başka bir sorun varsa
+        this.handleError(error, 'Failed to upload backup');
+      }
     }
-}
+  }
 
   public async requestOtp(deliveryMethod: 'MAIL' | 'AUTHENTICATOR', token: string): Promise<OtpResponse> {
     this.ensureInitialized();
