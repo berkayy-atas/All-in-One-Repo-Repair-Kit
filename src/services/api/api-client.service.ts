@@ -55,21 +55,16 @@ export class ApiClientService extends BaseService implements IApiClient {
         ...activationDetails,
     };
 
-      const response = await this.httpClient.post(
+      const response = await axios.post(
         `${this.baseUrl}/endpoint/activation`,
-        JSON.stringify(requestBody),
+        requestBody,
         {
-          'Content-Type': 'application/json',
+          timeout: this.timeout,
+          headers: { 'User-Agent': 'iCredible-Git-Security/2.0' },
         }
       );
 
-      if (response.message.statusCode !== 200) {
-        throw new Error(`Authentication failed: HTTP ${response.message.statusCode}`);
-      }
-
-      const responseBody = await response.readBody();
-      const apiResponse: ApiResponse<AuthTokenResponse> = JSON.parse(responseBody);
-
+      const apiResponse: ApiResponse<AuthTokenResponse> = response.data;
       if (!apiResponse.success) {
         throw new Error(`Authentication failed: ${apiResponse.error || apiResponse.message}`);
       }
@@ -89,14 +84,11 @@ export class ApiClientService extends BaseService implements IApiClient {
 
       const form = new FormData();
       
-      // 1. ADIM: Dosyayı ekle (Bu C# koduyla aynı)
       form.append('file', uploadData.file, {
         filename: uploadData.fileName,
         contentType: 'application/octet-stream',
       });
 
-      // 2. ADIM: TÜM METADATA'YI AYRI AYRI ALANLAR OLARAK EKLE (C# kodunun yaptığı gibi)
-      // Bu, sunucunun beklediği doğru yapıdır.
       form.append('Size', uploadData.size.toString());
       form.append('CompressedFileSize', uploadData.compressedFileSize.toString());
       form.append('Attributes', uploadData.attributes.toString());
@@ -107,7 +99,6 @@ export class ApiClientService extends BaseService implements IApiClient {
       form.append('EncryptionType', uploadData.encryptionType);
       form.append('RevisionType', uploadData.revisionType.toString());
 
-      // MetaData'yı da C#'taki gibi düzleştirerek ekle
       form.append('MetaData[Event]', uploadData.metadata.event);
       form.append('MetaData[Ref]', uploadData.metadata.ref);
       form.append('MetaData[Actor]', uploadData.metadata.actor);
@@ -158,38 +149,31 @@ export class ApiClientService extends BaseService implements IApiClient {
     }
   }
 
-  public async requestOtp(deliveryMethod: 'MAIL' | 'AUTHENTICATOR', token: string): Promise<OtpResponse> {
+   public async requestOtp(deliveryMethod: 'MAIL' | 'AUTHENTICATOR', token: string): Promise<OtpResponse> {
     this.ensureInitialized();
-
     try {
       this.logger.info(`Requesting OTP via ${deliveryMethod}`);
-      
-      const requestBody = JSON.stringify({
+      const requestBody = {
         deliveryMethod: deliveryMethod,
         sourceType: 'FileDownload',
         generationMode: 'Number',
         endpointType: 'Workstation',
         endpointName: `Github Endpoint (${process.env.GITHUB_REPOSITORY || 'Unknown'})`,
-      });
+      };
 
-      const response = await this.httpClient.post(
+      const response = await axios.post(
         `${this.baseUrl}/OTP/Send`,
         requestBody,
         {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'User-Agent': 'iCredible-Git-Security/2.0',
+          timeout: this.timeout,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'User-Agent': 'iCredible-Git-Security/2.0',
+          },
         }
       );
 
-      if (response.message.statusCode !== 200) {
-        const errorBody = await response.readBody();
-        throw new Error(`OTP request failed: HTTP ${response.message.statusCode} - ${errorBody}`);
-      }
-
-      const responseBody = await response.readBody();
-      const apiResponse: ApiResponse<OtpResponse> = JSON.parse(responseBody);
-
+      const apiResponse: ApiResponse<OtpResponse> = response.data;
       if (!apiResponse.success) {
         throw new Error(`OTP request failed: ${apiResponse.error || apiResponse.message}`);
       }
@@ -197,38 +181,29 @@ export class ApiClientService extends BaseService implements IApiClient {
       this.logger.info('OTP requested successfully');
       return apiResponse.data;
     } catch (error) {
-      this.handleError(error, 'Failed to request OTP');
+      this.handleAxiosError(error, 'Failed to request OTP');
     }
   }
 
   public async verifyOtp(uniqueKey: string, token: string): Promise<OtpStatusResponse> {
     this.ensureInitialized();
-
     try {
-      const requestBody = JSON.stringify({
-        uniqueKey: uniqueKey,
-      });
+      const requestBody = { uniqueKey: uniqueKey };
 
-      const response = await this.httpClient.post(
+      const response = await axios.post(
         `${this.baseUrl}/OTP/GetOTPStatus`,
         requestBody,
         {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'User-Agent': 'iCredible-Git-Security/2.0',
+          timeout: this.timeout,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'User-Agent': 'iCredible-Git-Security/2.0',
+          },
         }
       );
-
-      if (response.message.statusCode !== 200) {
-        return { verified: false };
-      }
-
-      const responseBody = await response.readBody();
-      const apiResponse: ApiResponse<boolean> = JSON.parse(responseBody);
-
-      return {
-        verified: apiResponse.success && apiResponse.data === true,
-      };
+      
+      const apiResponse: ApiResponse<boolean> = response.data;
+      return { verified: apiResponse.success && apiResponse.data === true };
     } catch (error) {
       this.logger.warn(`OTP verification check failed: ${String(error)}`);
       return { verified: false };
@@ -237,90 +212,40 @@ export class ApiClientService extends BaseService implements IApiClient {
 
   public async downloadBackup(fileVersionId: string, token: string, uniqueKey: string): Promise<Buffer> {
     this.ensureInitialized();
-
     try {
       this.logger.info(`Downloading backup with version ID: ${fileVersionId}`);
       
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'X-Unique-Key': uniqueKey,
-        'User-Agent': 'iCredible-Git-Security/2.0',
-      };
-
-      const response = await this.httpClient.get(
+      const response = await axios.get(
         `${this.baseUrl}/restore/${fileVersionId}`,
-        headers
+        {
+          timeout: this.timeout,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'X-Unique-Key': uniqueKey,
+            'User-Agent': 'iCredible-Git-Security/2.0',
+          },
+          responseType: 'arraybuffer',
+        }
       );
 
-      if (response.message.statusCode !== 200) {
-        const errorBody = await response.readBody();
-        throw new Error(`Download failed: HTTP ${response.message.statusCode} - ${errorBody}`);
-      }
-
-      const responseBody = await response.readBody();
-      const buffer = Buffer.from(responseBody, 'binary');
+      const buffer = Buffer.from(response.data);
       this.logger.info(`Backup downloaded successfully. Size: ${buffer.length} bytes`);
-      
       return buffer;
+
     } catch (error) {
-      this.handleError(error, 'Failed to download backup');
+      this.handleAxiosError(error, 'Failed to download backup');
     }
   }
-
-  // Utility method for making generic API requests
-  public async makeRequest<T>(
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-    endpoint: string,
-    token?: string,
-    body?: any,
-    additionalHeaders?: Record<string, string>
-  ): Promise<ApiResponse<T>> {
-    this.ensureInitialized();
-
-    try {
-      const headers: Record<string, string> = {
-        'User-Agent': 'iCredible-Git-Security/2.0',
-        ...additionalHeaders,
-      };
-
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      if (body && typeof body === 'object') {
-        headers['Content-Type'] = 'application/json';
-        body = JSON.stringify(body);
-      }
-
-      const url = `${this.baseUrl}${endpoint}`;
-      let response;
-
-      switch (method) {
-        case 'GET':
-          response = await this.httpClient.get(url, headers);
-          break;
-        case 'POST':
-          response = await this.httpClient.post(url, body, headers);
-          break;
-        case 'PUT':
-          response = await this.httpClient.put(url, body, headers);
-          break;
-        case 'DELETE':
-          response = await this.httpClient.del(url, headers);
-          break;
-        default:
-          throw new Error(`Unsupported HTTP method: ${method}`);
-      }
-
-      const responseBody = await response.readBody();
-      
-      if (response.message.statusCode && response.message.statusCode >= 400) {
-        throw new Error(`HTTP ${response.message.statusCode}: ${responseBody}`);
-      }
-
-      return JSON.parse(responseBody);
-    } catch (error) {
-      this.handleError(error, `Failed to make ${method} request to ${endpoint}`);
+  
+  private handleAxiosError(error: any, contextMessage: string): never {
+    if (axios.isAxiosError(error) && error.response) {
+      const serverError = JSON.stringify(error.response.data);
+      this.handleError(
+        new Error(`${contextMessage}: HTTP ${error.response.status} - ${serverError}`),
+        contextMessage
+      );
+    } else {
+      this.handleError(error, contextMessage);
     }
   }
 }
