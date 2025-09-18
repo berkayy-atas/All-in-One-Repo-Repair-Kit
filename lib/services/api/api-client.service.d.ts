@@ -10,7 +10,7 @@ export declare class ApiClientService extends BaseService implements IApiClient 
     constructor(logger: ILogger, baseUrl: string, githubService: GitHubService, timeout?: number);
     protected onInitialize(): Promise<void>;
     authenticate(activationCode: string): Promise<AuthTokenResponse>;
-    uploadBackup(uploadData: FileUploadData, fileSecToken: string): Promise<BackupUploadResponse>;
+    uploadBackup(uploadData: FileUploadData, token: string): Promise<BackupUploadResponse>;
     requestOtp(deliveryMethod: 'MAIL' | 'AUTHENTICATOR', token: string): Promise<OtpResponse>;
     verifyOtp(uniqueKey: string, token: string): Promise<OtpStatusResponse>;
     downloadBackup(fileVersionId: string, token: string, uniqueKey: string): Promise<Buffer>;

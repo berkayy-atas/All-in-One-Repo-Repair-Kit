@@ -80,76 +80,79 @@ export class ApiClientService extends BaseService implements IApiClient {
     }
   }
 
-  public async uploadBackup(uploadData: FileUploadData, fileSecToken: string): Promise<BackupUploadResponse> {
+  public async uploadBackup(uploadData: FileUploadData, token: string): Promise<BackupUploadResponse> {
     this.ensureInitialized();
 
     try {
       this.logger.info(`Uploading backup file: ${uploadData.fileName}`);
-      
-      // Create form data
+
+      // 1. ADIM: Sunucunun beklediği modele uygun bir metadata nesnesi oluştur.
+      const requestData = {
+        Size: uploadData.size,
+        CompressedFileSize: uploadData.compressedFileSize,
+        Attributes: uploadData.attributes,
+        FileName: uploadData.fileName,
+        CompressionEngine: uploadData.compressionEngine,
+        CompressionLevel: uploadData.compressionLevel,
+        FullPath: uploadData.fullPath,
+        EncryptionType: uploadData.encryptionType,
+        RevisionType: uploadData.revisionType,
+        MetaData: {
+          Event: uploadData.metadata.event,
+          Ref: uploadData.metadata.ref,
+          Actor: uploadData.metadata.actor,
+          Owner: uploadData.metadata.owner,
+          OwnerType: uploadData.metadata.ownerType,
+          Commit: uploadData.metadata.commit,
+          CommitShort: uploadData.metadata.commitShort,
+          Author: uploadData.metadata.author,
+          Date: uploadData.metadata.date,
+          Committer: uploadData.metadata.committer,
+          Message: uploadData.metadata.message,
+        }
+      };
+
+      // 2. ADIM: Bu metadata nesnesini bir JSON metnine çevir.
+      const requestJson = JSON.stringify(requestData);
+
+      // 3. ADIM: FormData'yı sadece iki bölümle oluştur: dosya ve JSON metni.
       const form = new FormData();
       form.append('file', uploadData.file, {
         filename: uploadData.fileName,
         contentType: 'application/octet-stream',
       });
-      
-      // Add metadata
-      form.append('Size', uploadData.size.toString());
-      form.append('CompressedFileSize', uploadData.compressedFileSize.toString());
-      form.append('Attributes', uploadData.attributes.toString());
-      form.append('FileName', uploadData.fileName);
-      form.append('CompressionEngine', uploadData.compressionEngine);
-      form.append('CompressionLevel', uploadData.compressionLevel);
-      form.append('FullPath', uploadData.fullPath);
-      form.append('encryptionType', uploadData.encryptionType);
-      form.append('RevisionType', uploadData.revisionType.toString());
-      
-      // Add GitHub metadata
-      form.append('MetaData[Event]', uploadData.metadata.event);
-      form.append('MetaData[Ref]', uploadData.metadata.ref);
-      form.append('MetaData[Actor]', uploadData.metadata.actor);
-      form.append('MetaData[Owner]', uploadData.metadata.owner);
-      form.append('MetaData[OwnerType]', uploadData.metadata.ownerType);
-      
-      if (uploadData.metadata.commit) {
-        form.append('MetaData[Commit]', uploadData.metadata.commit);
-        form.append('MetaData[CommitShort]', uploadData.metadata.commitShort);
-        form.append('MetaData[Author]', uploadData.metadata.author);
-        form.append('MetaData[Date]', uploadData.metadata.date);
-        form.append('MetaData[Committer]', uploadData.metadata.committer);
-        form.append('MetaData[Message]', uploadData.metadata.message);
-      }
+      form.append('request', requestJson);
 
+      // 4. ADIM: İsteği gönder.
       const headers = {
-        'Authorization': `Bearer ${fileSecToken}`,
+        'Authorization': `Bearer ${token}`,
         'User-Agent': 'iCredible-Git-Security/2.0',
         ...form.getHeaders(),
       };
 
       const response = await this.httpClient.post(
         `${this.baseUrl}/backup/shield`,
-        form.getBuffer().toString('binary'),
+        form.getBuffer().toString(),
         headers
       );
 
+      // ... fonksiyonun geri kalanı ...
       if (response.message.statusCode !== 200) {
         const errorBody = await response.readBody();
         throw new Error(`Upload failed: HTTP ${response.message.statusCode} - ${errorBody}`);
       }
-
       const responseBody = await response.readBody();
       const apiResponse: ApiResponse<BackupUploadResponse> = JSON.parse(responseBody);
-
       if (!apiResponse.success) {
         throw new Error(`Upload failed: ${apiResponse.error || apiResponse.message}`);
       }
-
       this.logger.info('Backup uploaded successfully');
       return apiResponse.data;
+
     } catch (error) {
       this.handleError(error, 'Failed to upload backup');
     }
-  }
+}
 
   public async requestOtp(deliveryMethod: 'MAIL' | 'AUTHENTICATOR', token: string): Promise<OtpResponse> {
     this.ensureInitialized();
