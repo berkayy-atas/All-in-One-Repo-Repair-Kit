@@ -1,7 +1,6 @@
 import { HttpClient } from '@actions/http-client';
 import { BearerCredentialHandler } from '@actions/http-client/lib/auth';
 import FormData from 'form-data';
-import axios from 'axios';
 import { BaseService } from '../base/base-service';
 import { GitHubService } from '../github/github.service';
 import { IApiClient, IGitHubService, ILogger } from '../base/interfaces';
@@ -14,6 +13,7 @@ import {
   ApiResponse,
   AuthTokenRequest,
 } from '@/types/api';
+import axios from 'axios';
 
 export class ApiClientService extends BaseService implements IApiClient {
   private httpClient: HttpClient;
@@ -80,74 +80,65 @@ export class ApiClientService extends BaseService implements IApiClient {
       this.handleError(error, 'Failed to authenticate with iCredible API');
     }
   }
-  // ... constructor ve diğer metodlar aynı kalır ...
 
-  public async uploadBackup(uploadData: FileUploadData, token: string): Promise<BackupUploadResponse> {
+   public async uploadBackup(uploadData: FileUploadData, token: string): Promise<BackupUploadResponse> {
     this.ensureInitialized();
 
     try {
       this.logger.info(`Uploading backup file: ${uploadData.fileName}`);
 
-      const requestData = {
-        // PascalCase anahtarları kullanmaya devam ediyoruz, bu doğru bir pratik.
-        Size: uploadData.size,
-        CompressedFileSize: uploadData.compressedFileSize,
-        Attributes: uploadData.attributes,
-        FileName: uploadData.fileName,
-        FullPath: uploadData.fullPath,
-        CompressionEngine: uploadData.compressionEngine,
-        CompressionLevel: uploadData.compressionLevel,
-        EncryptionType: uploadData.encryptionType,
-        RevisionType: uploadData.revisionType,
-        MetaData: {
-          Event: uploadData.metadata.event,
-          Ref: uploadData.metadata.ref,
-          Actor: uploadData.metadata.actor,
-          Owner: uploadData.metadata.owner,
-          OwnerType: uploadData.metadata.ownerType,
-          Commit: uploadData.metadata.commit,
-          CommitShort: uploadData.metadata.commitShort,
-          Author: uploadData.metadata.author,
-          Date: uploadData.metadata.date,
-          Committer: uploadData.metadata.committer,
-          Message: uploadData.metadata.message,
-        }
-      };
-
-      const requestJson = JSON.stringify(requestData);
-
       const form = new FormData();
+      
+      // 1. ADIM: Dosyayı ekle (Bu C# koduyla aynı)
       form.append('file', uploadData.file, {
         filename: uploadData.fileName,
         contentType: 'application/octet-stream',
       });
-      form.append('request', requestJson, {
-        contentType: 'application/json'
-      });
+
+      // 2. ADIM: TÜM METADATA'YI AYRI AYRI ALANLAR OLARAK EKLE (C# kodunun yaptığı gibi)
+      // Bu, sunucunun beklediği doğru yapıdır.
+      form.append('Size', uploadData.size.toString());
+      form.append('CompressedFileSize', uploadData.compressedFileSize.toString());
+      form.append('Attributes', uploadData.attributes.toString());
+      form.append('FileName', uploadData.fileName);
+      form.append('CompressionEngine', uploadData.compressionEngine);
+      form.append('CompressionLevel', uploadData.compressionLevel);
+      form.append('FullPath', uploadData.fullPath);
+      form.append('EncryptionType', uploadData.encryptionType);
+      form.append('RevisionType', uploadData.revisionType.toString());
+
+      // MetaData'yı da C#'taki gibi düzleştirerek ekle
+      form.append('MetaData[Event]', uploadData.metadata.event);
+      form.append('MetaData[Ref]', uploadData.metadata.ref);
+      form.append('MetaData[Actor]', uploadData.metadata.actor);
+      form.append('MetaData[Owner]', uploadData.metadata.owner);
+      form.append('MetaData[OwnerType]', uploadData.metadata.ownerType);
       
+      if (uploadData.metadata.commit) {
+        form.append('MetaData[Commit]', uploadData.metadata.commit);
+        form.append('MetaData[CommitShort]', uploadData.metadata.commitShort);
+        form.append('MetaData[Author]', uploadData.metadata.author);
+        form.append('MetaData[Date]', uploadData.metadata.date);
+        form.append('MetaData[Committer]', uploadData.metadata.committer);
+        form.append('MetaData[Message]', uploadData.metadata.message);
+      }
+
       const headers = {
         'Authorization': `Bearer ${token}`,
         'User-Agent': 'iCredible-Git-Security/2.0',
-        ...form.getHeaders(), // axios, form-data kütüphanesiyle sorunsuz çalışır
+        ...form.getHeaders(),
       };
 
-      // @actions/http-client yerine axios kullanarak POST isteği yap
+      // İsteği axios ile gönder
       const response = await axios.post(
         `${this.baseUrl}/backup/shield`,
-        form, // axios, FormData stream'ini doğal olarak destekler
-        {
-          headers: headers,
-          maxContentLength: Infinity, // Büyük dosyalar için limitleri kaldır
-          maxBodyLength: Infinity,
-        }
+        form,
+        { headers: headers, maxContentLength: Infinity, maxBodyLength: Infinity }
       );
 
-      // axios'ta başarılı cevap doğrudan response.data içinde gelir
       const apiResponse: ApiResponse<BackupUploadResponse> = response.data;
 
       if (!apiResponse.success) {
-        // axios'ta hata yönetimi genellikle try-catch bloğunun catch kısmında yapılır
-        // ama API'niz 200 OK içinde { success: false } dönebileceği için bu kontrol kalmalı
         throw new Error(`Upload failed: ${apiResponse.error || apiResponse.message}`);
       }
 
@@ -155,16 +146,13 @@ export class ApiClientService extends BaseService implements IApiClient {
       return apiResponse.data;
 
     } catch (error) {
-      // axios'un hata nesnesi daha zengindir, sunucudan gelen cevabı içerir
       if (axios.isAxiosError(error) && error.response) {
-        // Sunucudan bir cevap geldiyse (422, 500 vb.), o cevabı logla
         const serverError = JSON.stringify(error.response.data);
         this.handleError(
           new Error(`Upload failed: HTTP ${error.response.status} - ${serverError}`),
           'Failed to upload backup'
         );
       } else {
-        // Ağ hatası gibi başka bir sorun varsa
         this.handleError(error, 'Failed to upload backup');
       }
     }
