@@ -108,6 +108,8 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
         config
       );
       this.logger.info(`${console.log(uploadData)}`);
+      this.logger.info(`${console.log(authResponse.token)}`);
+
 
       const uploadResponse = await this.apiClient.uploadBackup(uploadData, authResponse.token);
 
