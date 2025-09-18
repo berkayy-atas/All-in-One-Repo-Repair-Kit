@@ -121,7 +121,10 @@ export class ApiClientService extends BaseService implements IApiClient {
         filename: uploadData.fileName,
         contentType: 'application/octet-stream',
       });
-      form.append('request', requestJson);
+      
+      form.append('request', requestJson, {
+        contentType: 'application/json'
+      });
 
       // 4. ADIM: İsteği gönder.
       const headers = {
