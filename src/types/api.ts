@@ -41,25 +41,9 @@ export interface AuthTokenResponse {
 export interface BackupUploadResponse {
   recordId: string;
   directoryRecordId: string;
+  fileRecordId: string;
 }
 
-export interface CommitMetadata {
-  commit: string;
-  commitShort: string;
-  parents: string;
-  author: string;
-  date: string;
-  committer: string;
-  message: string;
-}
-
-export interface BackupMetadata extends CommitMetadata {
-  event: string;
-  ref: string;
-  actor: string;
-  owner: string;
-  ownerType: string;
-}
 
 export interface OtpRequest {
   deliveryMethod: 'MAIL' | 'AUTHENTICATOR';
@@ -89,6 +73,44 @@ export interface RestoreRequest {
   uniqueKey: string;
 }
 
+export interface CommitMetadata {
+  commit: string;
+  commitShort: string;
+  parents: string;
+  author: string;
+  date: string;
+  committer: string;
+  message: string;
+}
+
+export interface BackupMetadata extends CommitMetadata {
+  event: string;
+  ref: string;
+  actor: string;
+  owner: string;
+  ownerType: string;
+}
+
+export enum CompressionEngine {
+  None = 0,
+  Zip = 1,
+  GZip = 2,
+  Brotli = 3,
+}
+
+export enum CompressionLevel {
+  Optimal = 0,
+  Fastest = 1,
+  NoCompression = 2,
+  SmallestSize = 3,
+}
+
+export enum EncryptionType {
+  None = 0,
+  ChaCha20Poly1305 = 1,
+  Aes = 2,
+}
+
 export interface FileUploadData {
   file: Buffer;
   size: number;
@@ -96,9 +118,9 @@ export interface FileUploadData {
   attributes: number;
   fileName: string;
   fullPath: string;
-  compressionEngine: string;
-  compressionLevel: string;
-  encryptionType: string;
+  compressionEngine: CompressionEngine | keyof typeof CompressionEngine | number;
+  compressionLevel: CompressionLevel | keyof typeof CompressionLevel | number;
+  encryptionType: EncryptionType | keyof typeof EncryptionType | number;
   revisionType: number;
   metadata: BackupMetadata;
 }

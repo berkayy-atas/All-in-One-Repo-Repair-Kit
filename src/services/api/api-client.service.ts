@@ -80,7 +80,7 @@ export class ApiClientService extends BaseService implements IApiClient {
     }
   }
 
-  public async uploadBackup(uploadData: FileUploadData, token: string): Promise<BackupUploadResponse> {
+  public async uploadBackup(uploadData: FileUploadData, fileSecToken: string): Promise<BackupUploadResponse> {
     this.ensureInitialized();
 
     try {
@@ -121,7 +121,7 @@ export class ApiClientService extends BaseService implements IApiClient {
       }
 
       const headers = {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${fileSecToken}`,
         'User-Agent': 'iCredible-Git-Security/2.0',
         ...form.getHeaders(),
       };
