@@ -61,8 +61,8 @@ export class ConfigService extends BaseService implements IConfigService {
     return {
       inputs,
       api: {
-        baseUrl: 'https://staging.api.file-security.icredible.com',
-        managementBaseUrl: 'https://staging.management.file-security.icredible.com',
+        baseUrl: 'https://dev.api.file-security.icredible.com',
+        managementBaseUrl: 'https://dev.management.file-security.icredible.com',
         timeout: 30000,
       },
       crypto: {
