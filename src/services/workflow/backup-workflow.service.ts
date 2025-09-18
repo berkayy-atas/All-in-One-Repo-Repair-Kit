@@ -198,7 +198,7 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
       size: originalSize,
       compressedFileSize: encryptedSize,
       attributes: config.upload.attributes,
-      fileName: context.repo.repo,
+      fileName: `${fileName}`,
       fullPath: `/${context.repo.owner}/${context.repo.repo}/${fileName}`,
       compressionEngine: config.upload.compressionEngine,
       compressionLevel: config.upload.compressionLevel,
