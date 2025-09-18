@@ -32,6 +32,7 @@ export class ApiClientService extends BaseService implements IApiClient {
   }
 
   protected async onInitialize(): Promise<void> {
+    await this.githubService.initialize();
     // Test HTTP client functionality
     try {
       await this.httpClient.get(`${this.baseUrl}/health`, {
