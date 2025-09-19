@@ -131,12 +131,10 @@ export class GitService extends BaseService implements IGitService {
 
   public async pushMirror(repoPath: string): Promise<void> {
     this.ensureInitialized();
-
     try {
-      this.logger.info('Pushing mirror to remote repository');
+      this.logger.info('Pushing mirror to remote repository (used for default token)');
       
-      await exec('git', ['push', '--mirror', 'origin'], { cwd: repoPath });
-      
+      await exec('git', ['push', '--mirror', '--force', 'origin'], { cwd: repoPath });
       this.logger.info('Mirror push completed successfully');
     } catch (error) {
       this.handleError(error, 'Failed to push mirror');
@@ -147,17 +145,26 @@ export class GitService extends BaseService implements IGitService {
     this.ensureInitialized();
 
     try {
-      this.logger.info('Pushing all branches to remote repository');
+      this.logger.info('Pushing all branches and tags individually to remote repository (used for PAT token)');
+
+      let branchOutput = '';
+      await exec('git', ['for-each-ref', '--format=%(refname:short)', 'refs/heads/'], {
+        cwd: repoPath,
+        listeners: { stdout: (data: Buffer) => { branchOutput += data.toString(); } },
+      });
+      const branches = branchOutput.split('\n').filter(b => b);
+
+      for (const branch of branches) {
+        this.logger.info(`Pushing branch: ${branch}`);
+        await exec('git', ['push', 'origin', branch, '--force'], { cwd: repoPath });
+      }
       
-      // Push all branches
-      await exec('git', ['push', '--all', 'origin', '--force'], { cwd: repoPath });
-      
-      // Push all tags
-      await exec('git', ['push', '--tags', 'origin', '--force'], { cwd: repoPath });
+      this.logger.info('Pushing all tags...');
+      await exec('git', ['push', 'origin', '--tags', '--force'], { cwd: repoPath });
       
       this.logger.info('All branches and tags pushed successfully');
     } catch (error) {
-      this.handleError(error, 'Failed to push all branches');
+      this.handleError(error, 'Failed to push all branches and tags');
     }
   }
 
@@ -231,11 +238,12 @@ export class GitService extends BaseService implements IGitService {
       try {
         this.logger.info('Filtering out .github/workflows directory using git-filter-repo...');
         // git-filter-repo komutu daha basit ve güvenlidir
-        await exec('git-filter-repo', [
+        await exec('git', [
+          'filter-repo',
+          '--force',
           '--path',
           '.github/workflows',
           '--invert-paths',
-          '--force'
         ], {
           cwd: repoPath
         });
