@@ -221,6 +221,7 @@ export class ApiClientService extends BaseService implements IApiClient {
           headers: {
             'Authorization': `Bearer ${token}`,
             'X-Unique-Key': uniqueKey,
+            'X-Verification-Key': 1,
             'User-Agent': 'iCredible-Git-Security/2.0',
           },
           responseType: 'arraybuffer',
