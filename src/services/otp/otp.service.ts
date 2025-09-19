@@ -31,9 +31,9 @@ export class OtpService extends BaseService implements IOtpService {
     try {
       const otpResponse = await this.apiClient.requestOtp(deliveryMethod, this.token);
       
-      const verificationUrl = this.getVerificationUrl(otpResponse.uniqueKey);
-      this.logger.info(`OTP sent via ${deliveryMethod}`);
-      this.logger.info(`Please verify your OTP at: ${verificationUrl}`);
+      const verificationUrl = this.getVerificationUrl(otpResponse);
+      this.logger.notice(`OTP sent via ${deliveryMethod}.`);
+      this.logger.notice(`Please verify your OTP at: ${verificationUrl}`);
       
       return otpResponse;
     } catch (error) {
@@ -50,21 +50,21 @@ export class OtpService extends BaseService implements IOtpService {
 
     try {
       const expirationTime = new Date(expiresAt).getTime();
-      const pollingInterval = 5000; // 5 seconds
+      const pollingInterval = 5000; 
       
       this.logger.info('Waiting for OTP verification...');
-      this.logger.info(`OTP will expire at: ${expiresAt}`);
+      this.logger.info(`Verification will time out at: ${new Date(expiresAt).toLocaleString()}`);
       
       while (Date.now() < expirationTime) {
         const statusResponse = await this.apiClient.verifyOtp(uniqueKey, this.token);
         
         if (statusResponse.verified) {
-          this.logger.info('OTP verified successfully');
+          this.logger.info('✅ OTP verified successfully');
           return true;
         }
         
         this.logger.debug('OTP not yet verified, waiting...');
-        await this.sleep(pollingInterval);
+        await new Promise(resolve => setTimeout(resolve, pollingInterval));
       }
       
       this.logger.error('OTP verification timed out');
@@ -74,8 +74,15 @@ export class OtpService extends BaseService implements IOtpService {
     }
   }
 
-  public getVerificationUrl(uniqueKey: string): string {
-    return `${this.managementBaseUrl}/otp-verification?key=${uniqueKey}`;
+  public getVerificationUrl(otpResponse: OtpResponse): string {
+    const queryParams = new URLSearchParams({
+      createdAt: otpResponse.createdAt,
+      expiresAt: otpResponse.expiresAt,
+      uniqueKey: otpResponse.uniqueKey,
+      source: 'FileDownload',
+    });
+
+    return `${this.managementBaseUrl}/git-security/?${queryParams.toString()}`;
   }
 
   // Helper method for sleeping

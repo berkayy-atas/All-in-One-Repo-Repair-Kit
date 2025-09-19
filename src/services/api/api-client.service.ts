@@ -149,16 +149,15 @@ export class ApiClientService extends BaseService implements IApiClient {
     }
   }
 
-   public async requestOtp(deliveryMethod: 'MAIL' | 'AUTHENTICATOR', token: string): Promise<OtpResponse> {
+  public async requestOtp(deliveryMethod: 'MAIL' | 'AUTHENTICATOR', token: string): Promise<OtpResponse> {
     this.ensureInitialized();
     try {
       this.logger.info(`Requesting OTP via ${deliveryMethod}`);
+      
       const requestBody = {
-        deliveryMethod: deliveryMethod,
-        sourceType: 'FileDownload',
-        generationMode: 'Number',
-        endpointType: 'Workstation',
-        endpointName: `Github Endpoint (${process.env.GITHUB_REPOSITORY || 'Unknown'})`,
+        Type: deliveryMethod,
+        Source: 'FileDownload',
+        OtpGenerationMode: 'Number',
       };
 
       const response = await axios.post(

@@ -39,11 +39,9 @@ export interface BackupUploadResponse {
     fileRecordId: string;
 }
 export interface OtpRequest {
-    deliveryMethod: 'MAIL' | 'AUTHENTICATOR';
-    sourceType: string;
-    generationMode: string;
-    endpointType: string;
-    endpointName: string;
+    Type: 'MAIL' | 'AUTHENTICATOR';
+    Source: string;
+    OtpGenerationMode: string;
 }
 export interface OtpResponse {
     uniqueKey: string;

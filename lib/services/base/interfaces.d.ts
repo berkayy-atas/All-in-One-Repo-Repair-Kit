@@ -49,7 +49,7 @@ export interface IOtpService extends IService {
     setAuthToken(token: string): void;
     requestOtp(deliveryMethod: 'MAIL' | 'AUTHENTICATOR'): Promise<OtpResponse>;
     waitForOtpVerification(uniqueKey: string, expiresAt: string): Promise<boolean>;
-    getVerificationUrl(uniqueKey: string): string;
+    getVerificationUrl(otpResponse: OtpResponse): string;
 }
 export interface IGitHubService extends IService {
     suspendActions(): Promise<void>;

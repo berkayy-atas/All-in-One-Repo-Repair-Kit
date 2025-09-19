@@ -10,7 +10,7 @@ export declare class OtpService extends BaseService implements IOtpService {
     setAuthToken(token: string): void;
     requestOtp(deliveryMethod: 'MAIL' | 'AUTHENTICATOR'): Promise<OtpResponse>;
     waitForOtpVerification(uniqueKey: string, expiresAt: string): Promise<boolean>;
-    getVerificationUrl(uniqueKey: string): string;
+    getVerificationUrl(otpResponse: OtpResponse): string;
     private sleep;
     checkOtpStatus(uniqueKey: string): Promise<boolean>;
     getRemainingTime(expiresAt: string): number;
