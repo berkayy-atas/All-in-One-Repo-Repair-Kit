@@ -210,7 +210,7 @@ export class GitService extends BaseService implements IGitService {
       await exec('git', [
         'filter-branch',
         '--force',
-        '--path .github/workflows',
+        '--index-filter',
         'git rm -rf --cached --ignore-unmatch .github/workflows',
         '--prune-empty',
         '--tag-name-filter',
