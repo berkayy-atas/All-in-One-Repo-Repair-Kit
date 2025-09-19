@@ -1,4 +1,4 @@
-import { createHash, createDecipher, pbkdf2, randomBytes, createCipheriv } from 'crypto';
+import { createHash, createDecipher, pbkdf2, randomBytes, createCipheriv, createDecipheriv } from 'crypto';
 import { promisify } from 'util';
 import { BaseService } from '../base/base-service';
 import { ICryptoService, ILogger } from '../base/interfaces';
@@ -6,9 +6,6 @@ import { ICryptoService, ILogger } from '../base/interfaces';
 const pbkdf2Async = promisify(pbkdf2);
 
 export class CryptoService extends BaseService implements ICryptoService {
-  private readonly saltLength = 8;
-  private readonly keyLength = 32; // 256 bits
-  private readonly iterations = 100000; // PBKDF2 iterations
 
   constructor(logger: ILogger) {
     super(logger);
@@ -39,153 +36,67 @@ export class CryptoService extends BaseService implements ICryptoService {
 
   public async encrypt(inputBuffer: Buffer, password: string): Promise<Buffer> {
     this.ensureInitialized();
-
     try {
-      // Generate random salt
-      const salt = randomBytes(this.saltLength);
+      // Statik Kriptografi Ayarları
+      const saltLength = 8;
+      const ivLength = 16;
+      const keyLength = 32;
+      const iterations = 100000;
+      const algorithm = 'aes-256-cbc';
+      const digest = 'sha256';
+
+      // 1. Rastgele bir "salt" (tuz) oluştur.
+      const salt = randomBytes(saltLength);
+      // 2. Parola ve salt'ı kullanarak yavaş ve güvenli bir şekilde anahtar türet (PBKDF2).
+      const key = await pbkdf2Async(password, salt, iterations, keyLength, digest);
+      // 3. Rastgele bir "iv" (başlatma vektörü) oluştur.
+      const iv = randomBytes(ivLength);
+      // 4. Anahtar ve IV kullanarak modern şifreleyiciyi oluştur.
+      const cipher = createCipheriv(algorithm, key, iv);
+      // 5. Veriyi şifrele.
+      const encryptedData = Buffer.concat([cipher.update(inputBuffer), cipher.final()]);
       
-      // Derive key using PBKDF2
-      const key = await pbkdf2Async(password, salt, this.iterations, this.keyLength, 'sha256');
-      
-      // Generate random IV
-      const iv = randomBytes(16); // 128 bits for AES
-      
-      // Create cipher
-      const cipher = createCipheriv('aes-256-cbc', key, iv);
-      
-      // Encrypt data
-      const encrypted = Buffer.concat([
-        cipher.update(inputBuffer),
-        cipher.final()
-      ]);
-      
-      // Combine salt, iv, and encrypted data
-      // Format: [salt(8)][iv(16)][encrypted_data]
-      const result = Buffer.concat([
-        Buffer.from('Salted__'), // OpenSSL compatible header
-        salt,
-        encrypted
-      ]);
-      
-      return result;
+      // 6. DÜZELTME: Sonuç artık IV'yi de içeriyor.
+      // Format: [header(8)][salt(8)][iv(16)][encrypted_data]
+      return Buffer.concat([Buffer.from('Salted__'), salt, iv, encryptedData]);
     } catch (error) {
       this.handleError(error, 'Failed to encrypt data');
     }
   }
 
+  /**
+   * Şifrelenmiş bir veriyi (Buffer) verilen parolayla çözer.
+   * Bu metod, yukarıdaki 'encrypt' metodunun oluşturduğu formatı bekler.
+   */
   public async decrypt(encryptedBuffer: Buffer, password: string): Promise<Buffer> {
     this.ensureInitialized();
-
     try {
-      // Check for OpenSSL compatible header
-      const headerLength = 8; // "Salted__"
+      // Statik Kriptografi Ayarları (encrypt ile aynı olmalı)
       const saltLength = 8;
-      
-      if (encryptedBuffer.length < headerLength + saltLength) {
-        throw new Error('Invalid encrypted data format');
-      }
-      
-      const header = encryptedBuffer.subarray(0, headerLength);
-      if (header.toString() !== 'Salted__') {
-        throw new Error('Invalid encrypted data header');
-      }
-      
-      // Extract salt and encrypted data
-      const salt = encryptedBuffer.subarray(headerLength, headerLength + saltLength);
-      const encryptedData = encryptedBuffer.subarray(headerLength + saltLength);
-      
-      // Derive key using PBKDF2
-      const key = await pbkdf2Async(password, salt, this.iterations, this.keyLength, 'sha256');
-      
-      // Create decipher
-      const decipher = createDecipher('aes-256-cbc', key);
-      
-      // Decrypt data
-      const decrypted = Buffer.concat([
-        decipher.update(encryptedData),
-        decipher.final()
-      ]);
-      
-      return decrypted;
+      const ivLength = 16;
+      const keyLength = 32;
+      const iterations = 100000;
+      const algorithm = 'aes-256-cbc';
+      const digest = 'sha256';
+
+      // 1. Dosyanın başından salt ve IV'yi ayıkla.
+      const salt = encryptedBuffer.subarray(8, 8 + saltLength);
+      const iv = encryptedBuffer.subarray(8 + saltLength, 8 + saltLength + ivLength);
+      const encryptedData = encryptedBuffer.subarray(8 + saltLength + ivLength);
+
+      // 2. Şifreleme sırasında kullanılan AYNI anahtarı yeniden türet.
+      const key = await pbkdf2Async(password, salt, iterations, keyLength, digest);
+
+      // 3. Anahtar ve IV kullanarak modern şifre çözücüyü oluştur.
+      const decipher = createDecipheriv(algorithm, key, iv);
+
+      // 4. Verinin şifresini çöz.
+      const decryptedData = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
+      return decryptedData;
     } catch (error) {
+      // Hata genellikle burada "bad decrypt" olarak fırlatılır.
       this.handleError(error, 'Failed to decrypt data');
     }
   }
-
-  // Alternative implementation using createCipheriv for more control
-  public async encryptWithIV(inputBuffer: Buffer, password: string): Promise<Buffer> {
-    this.ensureInitialized();
-
-    try {
-      // Generate random salt and IV
-      const salt = randomBytes(this.saltLength);
-      const iv = randomBytes(16);
-      
-      // Derive key using PBKDF2
-      const key = await pbkdf2Async(password, salt, this.iterations, this.keyLength, 'sha256');
-      
-      // Create cipher with explicit IV
-      const cipher = require('crypto').createCipheriv('aes-256-cbc', key, iv);
-      
-      // Encrypt data
-      const encrypted = Buffer.concat([
-        cipher.update(inputBuffer),
-        cipher.final()
-      ]);
-      
-      // Combine salt, iv, and encrypted data
-      // Format: [header(8)][salt(8)][iv(16)][encrypted_data]
-      const result = Buffer.concat([
-        Buffer.from('Salted__'),
-        salt,
-        iv,
-        encrypted
-      ]);
-      
-      return result;
-    } catch (error) {
-      this.handleError(error, 'Failed to encrypt data with IV');
-    }
-  }
-
-  public async decryptWithIV(encryptedBuffer: Buffer, password: string): Promise<Buffer> {
-    this.ensureInitialized();
-
-    try {
-      const headerLength = 8;
-      const saltLength = 8;
-      const ivLength = 16;
-      const minLength = headerLength + saltLength + ivLength;
-      
-      if (encryptedBuffer.length < minLength) {
-        throw new Error('Invalid encrypted data format');
-      }
-      
-      // Extract components
-      const header = encryptedBuffer.subarray(0, headerLength);
-      if (header.toString() !== 'Salted__') {
-        throw new Error('Invalid encrypted data header');
-      }
-      
-      const salt = encryptedBuffer.subarray(headerLength, headerLength + saltLength);
-      const iv = encryptedBuffer.subarray(headerLength + saltLength, headerLength + saltLength + ivLength);
-      const encryptedData = encryptedBuffer.subarray(headerLength + saltLength + ivLength);
-      
-      // Derive key
-      const key = await pbkdf2Async(password, salt, this.iterations, this.keyLength, 'sha256');
-      
-      // Create decipher
-      const decipher = require('crypto').createDecipheriv('aes-256-cbc', key, iv);
-      
-      // Decrypt data
-      const decrypted = Buffer.concat([
-        decipher.update(encryptedData),
-        decipher.final()
-      ]);
-      
-      return decrypted;
-    } catch (error) {
-      this.handleError(error, 'Failed to decrypt data with IV');
-    }
-  }
+  
 }
