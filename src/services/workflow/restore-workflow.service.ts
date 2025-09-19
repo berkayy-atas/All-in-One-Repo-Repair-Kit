@@ -1,3 +1,4 @@
+import * as core from '@actions/core';
 import { promises as fs } from 'fs';
 import { context } from '@actions/github';
 import { BaseService } from '../base/base-service';
@@ -207,7 +208,7 @@ export class RestoreWorkflowService extends BaseService implements IRestoreWorkf
     // Determine which token to use
     const token = hasPatToken 
       ? config.inputs.icredible_repository_restore_token 
-      : process.env.GITHUB_TOKEN;
+      : core.getInput('github-token', { required: true });
     
     if (!token) {
       throw new Error('No GitHub token available for pushing');
