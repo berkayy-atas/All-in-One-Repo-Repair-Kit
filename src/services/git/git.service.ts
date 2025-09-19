@@ -4,6 +4,9 @@ import { IGitService, ILogger } from '../base/interfaces';
 import { CommitInfo } from '@/types/github';
 
 export class GitService extends BaseService implements IGitService {
+    private isFilterRepoAvailable: boolean = false;
+
+
   constructor(logger: ILogger) {
     super(logger);
   }
@@ -12,6 +15,7 @@ export class GitService extends BaseService implements IGitService {
     // Verify git is available
     try {
       await exec('git', ['--version'], { silent: true });
+      await this.setupGitFilterRepo();
     } catch (error) {
       throw new Error('Git is not available in the environment');
     }
@@ -199,42 +203,67 @@ export class GitService extends BaseService implements IGitService {
     }
   }
 
+  private async setupGitFilterRepo(): Promise<void> {
+    try {
+      this.logger.info('Checking for Python and attempting to install git-filter-repo via pip...');
+      
+      // Python'ın varlığını kontrol et (pip3 genellikle Python 3'ü işaret eder)
+      await exec('python3', ['--version'], { silent: true });
+      await exec('pip3', ['--version'], { silent: true });
+
+      // git-filter-repo'yu pip ile kur
+      await exec('pip3', ['install', 'git-filter-repo']);
+      
+      this.isFilterRepoAvailable = true;
+      this.logger.info('git-filter-repo installed successfully and is ready to use.');
+    } catch (error) {
+      this.logger.warn(`Could not install git-filter-repo via pip: ${String(error)}. Falling back to git-filter-branch.`);
+      this.isFilterRepoAvailable = false;
+    }
+  }
+
+  // --- BU FONKSİYON GÜNCELLENDİ ---
   public async filterWorkflowDirectory(repoPath: string): Promise<void> {
     this.ensureInitialized();
 
-    try {
-      this.logger.info('Filtering out .github/workflows directory from repository history');
-      
-      // Use git filter-branch to remove .github/workflows directory
-      // This is equivalent to the git-filter-repo functionality
-      await exec('git', [
-        'filter-branch',
-        '--force',
-        '--index-filter',
-        'git rm -rf --cached --ignore-unmatch .github/workflows',
-        '--prune-empty',
-        '--tag-name-filter',
-        'cat',
-        '--',
-        '--all'
-      ], { cwd: repoPath });
-      
-      this.logger.info('Workflow directory filtering completed');
-    } catch (error) {
-      // If filter-branch fails, try alternative approach
-      this.logger.warn('filter-branch failed, trying alternative approach');
-      
+    // Öncelikli olarak git-filter-repo'yu kullanmayı dene
+    if (this.isFilterRepoAvailable) {
       try {
-        // Alternative: Just remove the directory and commit
-        await exec('git', ['rm', '-rf', '.github/workflows'], { 
-          cwd: repoPath,
-          ignoreReturnCode: true, // Directory might not exist
+        this.logger.info('Filtering out .github/workflows directory using git-filter-repo...');
+        // git-filter-repo komutu daha basit ve güvenlidir
+        await exec('git-filter-repo', [
+          '--path',
+          '.github/workflows',
+          '--invert-paths',
+          '--force'
+        ], {
+          cwd: repoPath
         });
         
-        this.logger.info('Workflow directory removed from working tree');
-      } catch (altError) {
-        this.logger.warn('Could not remove workflows directory, continuing without filtering');
+        this.logger.info('Workflow directory filtering completed with git-filter-repo.');
+        return; // İşlem başarılı, fonksiyondan çık
+      } catch (error) {
+        this.logger.warn(`git-filter-repo failed: ${String(error)}. Falling back to git-filter-branch.`);
       }
+    }
+
+    // Eğer git-filter-repo başarısız olursa veya hiç kurulamadıysa, eski yöntemi kullan
+    this.logger.info('Filtering out .github/workflows directory using git-filter-branch (fallback)...');
+    try {
+      const command = 'git rm -rf --cached --ignore-unmatch .github/workflows';
+      const env = { ...process.env, FILTER_BRANCH_SQUELCH_WARNING: '1' };
+
+      await exec('git', [
+        'filter-branch', '--force', '--index-filter', command,
+        '--prune-empty', '--tag-name-filter', 'cat', '--', '--all'
+      ], { 
+        cwd: repoPath,
+        env: env
+      });
+      
+      this.logger.info('Workflow directory filtering completed with git-filter-branch.');
+    } catch (error) {
+      this.handleError(error, 'Failed to filter workflow directory from repository history. This is a critical step.');
     }
   }
 

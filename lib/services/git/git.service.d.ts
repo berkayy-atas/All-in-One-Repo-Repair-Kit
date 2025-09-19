@@ -2,6 +2,7 @@ import { BaseService } from '../base/base-service';
 import { IGitService, ILogger } from '../base/interfaces';
 import { CommitInfo } from '@/types/github';
 export declare class GitService extends BaseService implements IGitService {
+    private isFilterRepoAvailable;
     constructor(logger: ILogger);
     protected onInitialize(): Promise<void>;
     createMirrorClone(sourceDir: string, targetDir: string): Promise<void>;
@@ -11,6 +12,7 @@ export declare class GitService extends BaseService implements IGitService {
     pushMirror(repoPath: string): Promise<void>;
     pushAllBranches(repoPath: string): Promise<void>;
     syncRemoteBranches(repoPath: string): Promise<void>;
+    private setupGitFilterRepo;
     filterWorkflowDirectory(repoPath: string): Promise<void>;
     hasCommits(repoPath?: string): Promise<boolean>;
     getCurrentBranch(repoPath?: string): Promise<string>;
