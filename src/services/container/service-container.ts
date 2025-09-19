@@ -83,7 +83,7 @@ export class ServiceContainer {
     if (!this.services.has('otp')) {
       const apiClient = this.getApiClient();
       const config = this.getConfigService().getApiConfig();
-      this.services.set('otp', new OtpService(this.logger, apiClient, config.baseUrl));
+      this.services.set('otp', new OtpService(this.logger, apiClient, config.managementBaseUrl));
     }
     return this.services.get('otp');
   }
