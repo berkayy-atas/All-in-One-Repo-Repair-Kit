@@ -211,7 +211,12 @@ export class GitService extends BaseService implements IGitService {
         'filter-branch',
         '--force',
         '--path .github/workflows',
-        '--invert-paths'
+        'git rm -rf --cached --ignore-unmatch .github/workflows',
+        '--prune-empty',
+        '--tag-name-filter',
+        'cat',
+        '--',
+        '--all'
       ], { cwd: repoPath });
       
       this.logger.info('Workflow directory filtering completed');
@@ -226,7 +231,7 @@ export class GitService extends BaseService implements IGitService {
           ignoreReturnCode: true, // Directory might not exist
         });
         
-        this.logger.info('The repository will be restored without the ./.github/workflow directory. If you want to restore this directory, you can find the relevant steps at the following link: https://github.com/marketplace/actions/icredible-git-security#-personal-access-token-pat-setup-guide-for-repository-restore');
+        this.logger.info('Workflow directory removed from working tree');
       } catch (altError) {
         this.logger.warn('Could not remove workflows directory, continuing without filtering');
       }
