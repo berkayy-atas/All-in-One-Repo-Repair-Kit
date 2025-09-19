@@ -129,12 +129,12 @@ export class GitService extends BaseService implements IGitService {
     }
   }
 
-  public async pushMirror(repoPath: string): Promise<void> {
+  public async pushMirror(repoPath: string, remoteUrl: string): Promise<void> {
     this.ensureInitialized();
     try {
       this.logger.info('Pushing mirror to remote repository (used for default token)');
       
-      await exec('git', ['push', '--mirror', '--force', 'origin'], { cwd: repoPath });
+      await exec('git', ['push', '--mirror', '--force', remoteUrl], { cwd: repoPath });
       this.logger.info('Mirror push completed successfully');
     } catch (error) {
       this.handleError(error, 'Failed to push mirror');
