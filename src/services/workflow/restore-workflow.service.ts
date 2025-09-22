@@ -14,7 +14,6 @@ import {
   IGitHubService
 } from '../base/interfaces';
 import { RestoreResult } from '@/types/github';
-import { GitHubService } from '../github/github.service';
 
 export class RestoreWorkflowService extends BaseService implements IRestoreWorkflowService {
   private configService: IConfigService;
@@ -63,7 +62,6 @@ export class RestoreWorkflowService extends BaseService implements IRestoreWorkf
     this.ensureInitialized();
 
     let actionsWereSuspended = false;
-    let activeGitHubService = this.githubService;
 
     try {
       this.logger.info('Starting restore workflow');
@@ -125,31 +123,15 @@ export class RestoreWorkflowService extends BaseService implements IRestoreWorkf
       if (hasPatToken) {
         this.logger.info('Step 8a: Syncing remote branches (PAT token available)');
         await this.gitService.syncRemoteBranches(config.files.sourceArchiveDir);
-        
-        const patToken = config.inputs.icredible_repository_restore_token;
-        if (!patToken) {
-          throw new Error('PAT token was expected but not found.');
-        }
-
-        this.logger.info('Creating a dedicated GitHubService instance with PAT token.');
-        activeGitHubService = new GitHubService(
-          this.logger,
-          patToken, 
-          context.repo.owner,
-          context.repo.repo,
-          this.configService
-        );
-        await activeGitHubService.initialize();
       } else {
         this.logger.info('Step 8b: Filtering workflow directory (default token)');
         await this.gitService.filterWorkflowDirectory(config.files.sourceArchiveDir);
       }
 
-
       // Step 9: Suspend GitHub Actions if requested
-      if (config.inputs.suspend_actions && activeGitHubService  && hasPatToken) {
+      if (config.inputs.suspend_actions && this.githubService && hasPatToken) {
         this.logger.info('Step 9: Suspending GitHub Actions');
-        await activeGitHubService.suspendActions();
+        await this.githubService.suspendActions();
         actionsWereSuspended = true;
       }
 
@@ -158,9 +140,9 @@ export class RestoreWorkflowService extends BaseService implements IRestoreWorkf
       await this.configureAndPush(config, hasPatToken);
 
       // Step 11: Resume GitHub Actions if they were suspended
-      if (actionsWereSuspended && activeGitHubService) {
+      if (actionsWereSuspended && this.githubService) {
         this.logger.info('Step 11: Resuming GitHub Actions');
-        await activeGitHubService.resumeActions();
+        await this.githubService.resumeActions();
         actionsWereSuspended = false;
       }
 
@@ -241,7 +223,7 @@ export class RestoreWorkflowService extends BaseService implements IRestoreWorkf
     // Push based on token type
     if (hasPatToken) {
       // PAT token can use mirror push
-      await this.gitService.pushAllBranches(repoPath);
+    await this.gitService.pushAllBranches(repoPath, remoteUrl);
 
     } else {
       // Default token push all branches individually

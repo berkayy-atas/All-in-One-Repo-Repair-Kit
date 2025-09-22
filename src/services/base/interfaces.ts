@@ -54,7 +54,7 @@ export interface IGitService extends IService {
   configureGit(userName: string, userEmail: string): Promise<void>;
   setRemoteUrl(repoPath: string, remoteUrl: string): Promise<void>;
   pushMirror(repoPath: string, remoteUrl: string): Promise<void>;
-  pushAllBranches(repoPath: string): Promise<void>;
+  pushAllBranches(repoPath: string, remoteUrl: string): Promise<void>;
   syncRemoteBranches(repoPath: string): Promise<void>;
   filterWorkflowDirectory(repoPath: string): Promise<void>;
 }

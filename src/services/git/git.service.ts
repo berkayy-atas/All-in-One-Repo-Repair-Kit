@@ -141,7 +141,7 @@ export class GitService extends BaseService implements IGitService {
     }
   }
 
-  public async pushAllBranches(repoPath: string): Promise<void> {
+public async pushAllBranches(repoPath: string, remoteUrl: string): Promise<void> {
     this.ensureInitialized();
 
     try {
@@ -156,17 +156,18 @@ export class GitService extends BaseService implements IGitService {
 
       for (const branch of branches) {
         this.logger.info(`Pushing branch: ${branch}`);
-        await exec('git', ['push', 'origin', branch, '--force'], { cwd: repoPath });
+        await exec('git', ['push', remoteUrl, branch, '--force'], { cwd: repoPath });
       }
       
       this.logger.info('Pushing all tags...');
-      await exec('git', ['push', 'origin', '--tags', '--force'], { cwd: repoPath });
+      await exec('git', ['push', remoteUrl, '--tags', '--force'], { cwd: repoPath });
       
       this.logger.info('All branches and tags pushed successfully');
     } catch (error) {
       this.handleError(error, 'Failed to push all branches and tags');
     }
   }
+
 
   public async syncRemoteBranches(repoPath: string): Promise<void> {
     this.ensureInitialized();
