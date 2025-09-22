@@ -223,10 +223,11 @@ export class RestoreWorkflowService extends BaseService implements IRestoreWorkf
     // Push based on token type
     if (hasPatToken) {
       // PAT token can use mirror push
-      await this.gitService.pushMirror(repoPath, remoteUrl);
+      await this.gitService.pushAllBranches(repoPath);
+
     } else {
       // Default token push all branches individually
-      await this.gitService.pushAllBranches(repoPath);
+      await this.gitService.pushMirror(repoPath, remoteUrl);
     }
   }
 
