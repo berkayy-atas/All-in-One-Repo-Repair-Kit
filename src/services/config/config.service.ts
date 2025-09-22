@@ -92,9 +92,9 @@ export class ConfigService extends BaseService implements IConfigService {
       },
       upload: {
         attributes: 32,
-        compressionEngine: 'None',
-        compressionLevel: 'NoCompression',
-        encryptionType: 'None',
+        compressionEngine: 'GZip',
+        compressionLevel: 'Optimal',
+        encryptionType: 'Aes',
         revisionType: 1,
       },
     };
