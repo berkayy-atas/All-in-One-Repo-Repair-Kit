@@ -64,12 +64,8 @@ export class ServiceContainer {
   }
 
   public getApiClient(): ApiClientService {
-    const configService = this.getConfigService();
-    const config = configService.getConfig();
     
-    const tokenForGitHubService = config.inputs.icredible_repository_restore_token 
-      ? config.inputs.icredible_repository_restore_token
-      : core.getInput('github-token', { required: true });
+    const tokenForGitHubService =  core.getInput('github-token', { required: true });
     if (!tokenForGitHubService) {
       throw new Error(
         'ApiClientService could not be created because GitHubService is unavailable (a token is likely missing).'
