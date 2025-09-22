@@ -64,23 +64,10 @@ export class ServiceContainer {
   }
 
   public getApiClient(): ApiClientService {
-    
-    const tokenForGitHubService =  core.getInput('github-token', { required: true });
-    if (!tokenForGitHubService) {
-      throw new Error(
-        'ApiClientService could not be created because GitHubService is unavailable (a token is likely missing).'
-      );
-    }
-    const githubService = this.getGitHubService(tokenForGitHubService);
-    if (!githubService) {
-      throw new Error(
-        'ApiClientService could not be created because GitHubService is unavailable (a token is likely missing).'
-      );
-    }
 
     if (!this.services.has('api')) {
-      const config = this.getConfigService().getApiConfig();
-      this.services.set('api', new ApiClientService(this.logger, config.baseUrl, githubService , config.timeout));
+      const config = this.getConfigService();
+      this.services.set('api', new ApiClientService(this.logger, config, config.getApiConfig().timeout));
     }
     return this.services.get('api');
   }

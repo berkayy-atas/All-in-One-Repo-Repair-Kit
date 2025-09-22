@@ -4,6 +4,9 @@ import FormData from 'form-data';
 import { BaseService } from '../base/base-service';
 import { GitHubService } from '../github/github.service';
 import { IApiClient, IGitHubService, ILogger } from '../base/interfaces';
+import * as core from '@actions/core';
+
+
 import {
   AuthTokenResponse,
   BackupUploadResponse,
@@ -14,18 +17,21 @@ import {
   AuthTokenRequest,
 } from '@/types/api';
 import axios from 'axios';
+import { context } from '@actions/github';
+import { ConfigService } from '../config/config.service';
+
 
 export class ApiClientService extends BaseService implements IApiClient {
   private httpClient: HttpClient;
+  private configService: ConfigService;
   private baseUrl: string;
   private timeout: number;
-  private githubService: GitHubService;
 
-  constructor(logger: ILogger, baseUrl: string,githubService: GitHubService, timeout: number = 30000) {
+  constructor(logger: ILogger, configService: ConfigService, timeout: number = 30000) {
     super(logger);
-    this.baseUrl = baseUrl;
+    this.configService = configService;
     this.timeout = timeout;
-    this.githubService = githubService;
+    this.baseUrl = configService.getApiConfig().baseUrl;
     this.httpClient = new HttpClient('iCredible-Git-Security/2.0', undefined, {
       allowRetries: true,
       maxRetries: 3,
@@ -33,7 +39,6 @@ export class ApiClientService extends BaseService implements IApiClient {
   }
 
   protected async onInitialize(): Promise<void> {
-    await this.githubService.initialize();
     // Test HTTP client functionality
     try {
       await this.httpClient.get(`${this.baseUrl}/health`, {
@@ -44,13 +49,28 @@ export class ApiClientService extends BaseService implements IApiClient {
     }
   }
 
+
   public async authenticate(activationCode: string): Promise<AuthTokenResponse> {
     this.ensureInitialized();
 
     try {
       this.logger.info('Authenticating with iCredible API');
-    const activationDetails = await this.githubService.getRepositoryActivationDetails();
-    const requestBody : AuthTokenRequest  = {
+
+      const defaultToken = core.getInput('github-token', { required: true });
+      const defaultTokenGitHubService = new GitHubService(
+        this.logger,
+        defaultToken,
+        context.repo.owner,
+        context.repo.repo,
+        this.configService
+      );
+
+      // 2. Bu geçici servisi initialize et
+      await defaultTokenGitHubService.initialize();
+
+      // 3. Aktivasyon detaylarını bu geçici servis üzerinden al
+      const activationDetails = await defaultTokenGitHubService.getRepositoryActivationDetails();
+          const requestBody : AuthTokenRequest  = {
         activationCode: activationCode,
         ...activationDetails,
     };
