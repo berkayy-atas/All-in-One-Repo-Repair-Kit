@@ -118,7 +118,6 @@ export class ServiceContainer {
     const serviceKey = patToken ? `restore-workflow-${patToken.substring(0, 8)}` : 'restore-workflow';
     
     if (!this.services.has(serviceKey)) {
-      const githubService = this.getGitHubService(patToken);
       this.services.set(serviceKey, new RestoreWorkflowService(
         this.logger,
         this.getConfigService(),
@@ -127,7 +126,7 @@ export class ServiceContainer {
         this.getGitService(),
         this.getApiClient(),
         this.getOtpService(),
-        githubService || undefined
+        this.getGitHubService(patToken) || undefined
       ));
     }
     return this.services.get(serviceKey);
