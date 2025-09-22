@@ -217,8 +217,8 @@ export class RestoreWorkflowService extends BaseService implements IRestoreWorkf
     // Build authenticated remote URL
     const remoteUrl = `https://x-access-token:${token}@github.com/${context.repo.owner}/${context.repo.repo}.git`;
     
-    // Set remote URL
-    await this.gitService.setRemoteUrl(repoPath, remoteUrl);
+    // // Set remote URL
+    // await this.gitService.setRemoteUrl(repoPath, remoteUrl);
     
     // Push based on token type
     if (hasPatToken) {
