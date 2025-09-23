@@ -215,44 +215,38 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
 
     let uploadMetadata = '';
     if (summary.commitInfo && summary.commitInfo.hash) {
-      // Base64 encode'a gerek yok çünkü doğrudan string olarak kullanıyoruz
       const message = summary.commitInfo.message || '';
       uploadMetadata = `
-      --------------------------------------------------
-      **Upload Metadata**
-      - Commit:      ${summary.commitInfo.hash}
-      - CommitShort: ${summary.commitInfo.shortHash}
-      - Author:      ${summary.commitInfo.author}
-      - Date:        ${summary.commitInfo.date}
-      - Committer:   ${summary.commitInfo.committer || 'GitHub'}
-      - Message:     ${message}
-      `.trim();
-          }
+--------------------------------------------------
+**Upload Metadata**
+- Commit:      ${summary.commitInfo.hash}
+- CommitShort: ${summary.commitInfo.shortHash}
+- Author:      ${summary.commitInfo.author}
+- Date:        ${summary.commitInfo.date}
+- Committer:   ${summary.commitInfo.committer || 'GitHub'}
+- Message:     ${message}
+`.trim();
+    }
     
-    const summaryMessage = `
-    ## 🛡️ iCredible Git Security - Backup Summary
+    // DEĞİŞİKLİK 1: Ana başlığı mesajdan ayırın
+    const title = '🛡️ iCredible Git Security - Backup Summary';
 
-    ✅ **Backup completed successfully!**
-    --------------------------------------------------
-    **Git Metadata**
-    Repository: ${process.env.GITHUB_REPOSITORY}
-    - Owner: ${context.repo.owner} [${process.env.OWNER_TYPE || 'User'}]
-    - Event: ${context.eventName}
-    - Ref:   ${context.ref}
-    - Actor: ${context.actor}
-    ${uploadMetadata}
-    --------------------------------------------------
-    **API Response**
-    - File version id: ${summary.recordId}
-    - You can access the backed-up file from this link: ${summary.mgmtBaseUrl}/dashboard/file-management/${summary.endpointId}/${summary.directoryRecordId}
-    `.trim();
+    const summaryMessage = `✅ **Backup completed successfully!**
+--------------------------------------------------
+**Git Metadata**
+Repository: ${process.env.GITHUB_REPOSITORY}
+- Owner: ${context.repo.owner} [${process.env.OWNER_TYPE || 'User'}]
+- Event: ${context.eventName}
+- Ref:   ${context.ref}
+- Actor: ${context.actor}
+${uploadMetadata}
+--------------------------------------------------
+**API Response**
+- File version id: ${summary.recordId}
+- You can access the backed-up file from this link: ${summary.mgmtBaseUrl}/dashboard/file-management/${summary.endpointId}/${summary.directoryRecordId}
+`.trim();
 
-    // GitHub notice formatı için özel karakterleri encode et
-    let message = summaryMessage.replace(/%/g, '%25');
-    message = message.replace(/\n/g, '%0A');
-    message = message.replace(/\r/g, '%0D');
-
-    this.logger.notice(message);
+    this.logger.notice(summaryMessage);
   }
 
 
