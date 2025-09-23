@@ -65,10 +65,8 @@ export class ApiClientService extends BaseService implements IApiClient {
         this.configService
       );
 
-      // 2. Bu geçici servisi initialize et
       await defaultTokenGitHubService.initialize();
 
-      // 3. Aktivasyon detaylarını bu geçici servis üzerinden al
       const activationDetails = await defaultTokenGitHubService.getRepositoryActivationDetails();
           const requestBody : AuthTokenRequest  = {
         activationCode: activationCode,
@@ -140,7 +138,6 @@ export class ApiClientService extends BaseService implements IApiClient {
         ...form.getHeaders(),
       };
 
-      // İsteği axios ile gönder
       const response = await axios.post(
         `${this.baseUrl}/backup/shield`,
         form,

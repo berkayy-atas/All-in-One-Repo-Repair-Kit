@@ -12,9 +12,7 @@ export class CompressionService extends BaseService implements ICompressionServi
   }
 
   protected async onInitialize(): Promise<void> {
-    // Validate that required modules are available
     try {
-      // Test tar functionality by checking if the module is available
       if (typeof tar.create !== 'function') {
         throw new Error('Tar create function not available');
       }

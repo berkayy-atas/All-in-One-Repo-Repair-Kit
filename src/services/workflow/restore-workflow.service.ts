@@ -202,10 +202,8 @@ export class RestoreWorkflowService extends BaseService implements IRestoreWorkf
   private async configureAndPush(config: any, hasPatToken: boolean): Promise<void> {
     const repoPath = config.files.sourceArchiveDir;
     
-    // Configure git user
     await this.gitService.configureGit(config.git.userName, config.git.userEmail);
     
-    // Determine which token to use
     const token = hasPatToken 
       ? config.inputs.icredible_repository_restore_token 
       : core.getInput('github-token', { required: true });

@@ -11,7 +11,7 @@ import {
   IApiClient 
 } from '../base/interfaces';
 import { BackupResult } from '@/types/github';
-import { BackupMetadata, FileUploadData } from '@/types/api';
+import { AuthTokenResponse, BackupMetadata, FileUploadData } from '@/types/api';
 import { exec } from '@actions/exec';
 
 export class BackupWorkflowService extends BaseService implements IBackupWorkflowService {
@@ -94,7 +94,7 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
 
       // Step 6: Authenticate with API
       this.logger.info('Step 6: Authenticating with iCredible API');
-      const authResponse = await this.apiClient.authenticate(config.inputs.icredible_activation_code);
+      const authResponse : AuthTokenResponse = await this.apiClient.authenticate(config.inputs.icredible_activation_code);
 
       // Step 7: Upload backup
       this.logger.info('Step 7: Uploading backup to iCredible');
@@ -116,11 +116,9 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
       this.displayBackupSummary({
         recordId: uploadResponse.recordId,
         directoryRecordId: uploadResponse.directoryRecordId,
-        fileSize: uncompressedSize,
-        compressedSize,
-        encryptedSize,
         commitInfo,
-        executionTime: Date.now() - startTime,
+        mgmtBaseUrl: config.api.managementBaseUrl,
+        endpointId: authResponse.endpointId,
       });
 
       // Clean up temporary files
@@ -206,50 +204,57 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
       metadata,
     };
   }
-
+ 
   private displayBackupSummary(summary: {
     recordId: string;
     directoryRecordId: string;
-    fileSize: number;
-    compressedSize: number;
-    encryptedSize: number;
     commitInfo: any;
-    executionTime: number;
+    mgmtBaseUrl: string;
+    endpointId: number;
   }): void {
-    const compressionRatio = ((summary.fileSize - summary.compressedSize) / summary.fileSize * 100).toFixed(1);
-    const executionTimeSeconds = (summary.executionTime / 1000).toFixed(1);
 
+    let uploadMetadata = '';
+    if (summary.commitInfo && summary.commitInfo.hash) {
+      // Base64 encode'a gerek yok çünkü doğrudan string olarak kullanıyoruz
+      const message = summary.commitInfo.message || '';
+      uploadMetadata = `
+      --------------------------------------------------
+      **Upload Metadata**
+      - Commit:      ${summary.commitInfo.hash}
+      - CommitShort: ${summary.commitInfo.shortHash}
+      - Author:      ${summary.commitInfo.author}
+      - Date:        ${summary.commitInfo.date}
+      - Committer:   ${summary.commitInfo.committer || 'GitHub'}
+      - Message:     ${message}
+      `.trim();
+          }
+    
     const summaryMessage = `
-## 🛡️ iCredible Git Security - Backup Summary
+    ## 🛡️ iCredible Git Security - Backup Summary
 
-### ✅ Backup Completed Successfully
+    ✅ **Backup completed successfully!**
+    --------------------------------------------------
+    **Git Metadata**
+    Repository: ${process.env.GITHUB_REPOSITORY}
+    - Owner: ${context.repo.owner} [${process.env.OWNER_TYPE || 'User'}]
+    - Event: ${context.eventName}
+    - Ref:   ${context.ref}
+    - Actor: ${context.actor}
+    ${uploadMetadata}
+    --------------------------------------------------
+    **API Response**
+    - File version id: ${summary.recordId}
+    - You can access the backed-up file from this link: ${summary.mgmtBaseUrl}/dashboard/file-management/${summary.endpointId}/${summary.directoryRecordId}
+    `.trim();
 
-**Repository Information:**
-- **Repository:** ${context.repo.owner}/${context.repo.repo}
-- **Branch:** ${context.ref}
-- **Commit:** ${summary.commitInfo.shortHash}
-- **Author:** ${summary.commitInfo.author}
-- **Message:** ${summary.commitInfo.message}
+    // GitHub notice formatı için özel karakterleri encode et
+    let message = summaryMessage.replace(/%/g, '%25');
+    message = message.replace(/\n/g, '%0A');
+    message = message.replace(/\r/g, '%0D');
 
-**Backup Details:**
-- **Record ID:** \`${summary.recordId}\`
-- **Directory Record ID:** \`${summary.directoryRecordId}\`
-- **Original Size:** ${this.formatBytes(summary.fileSize)}
-- **Compressed Size:** ${this.formatBytes(summary.compressedSize)} (${compressionRatio}% compression)
-- **Encrypted Size:** ${this.formatBytes(summary.encryptedSize)}
-- **Execution Time:** ${executionTimeSeconds}s
-
-**Security:**
-- ✅ AES-256-CBC encryption applied
-- ✅ PBKDF2 key derivation used
-- ✅ Zstandard level 10 compression applied
-- ✅ Secure backup uploaded to iCredible
-
-Your repository has been securely backed up and is ready for restoration when needed.
-`.trim();
-
-    this.logger.notice(summaryMessage);
+    this.logger.notice(message);
   }
+
 
   private formatBytes(bytes: number): string {
     if (bytes === 0) return '0 B';

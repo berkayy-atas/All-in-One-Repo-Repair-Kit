@@ -215,7 +215,6 @@ public async pushAllBranches(repoPath: string, remoteUrl: string): Promise<void>
     try {
       this.logger.info('Checking for Python and attempting to install git-filter-repo via pip...');
       
-      // Python'ın varlığını kontrol et (pip3 genellikle Python 3'ü işaret eder)
       await exec('python3', ['--version'], { silent: true });
       await exec('pip3', ['--version'], { silent: true });
 
@@ -230,15 +229,12 @@ public async pushAllBranches(repoPath: string, remoteUrl: string): Promise<void>
     }
   }
 
-  // --- BU FONKSİYON GÜNCELLENDİ ---
   public async filterWorkflowDirectory(repoPath: string): Promise<void> {
     this.ensureInitialized();
 
-    // Öncelikli olarak git-filter-repo'yu kullanmayı dene
     if (this.isFilterRepoAvailable) {
       try {
         this.logger.info('Filtering out .github/workflows directory using git-filter-repo...');
-        // git-filter-repo komutu daha basit ve güvenlidir
         await exec('git', [
           'filter-repo',
           '--force',
@@ -250,13 +246,12 @@ public async pushAllBranches(repoPath: string, remoteUrl: string): Promise<void>
         });
         
         this.logger.info('Workflow directory filtering completed with git-filter-repo.');
-        return; // İşlem başarılı, fonksiyondan çık
+        return; 
       } catch (error) {
         this.logger.warn(`git-filter-repo failed: ${String(error)}. Falling back to git-filter-branch.`);
       }
     }
 
-    // Eğer git-filter-repo başarısız olursa veya hiç kurulamadıysa, eski yöntemi kullan
     this.logger.info('Filtering out .github/workflows directory using git-filter-branch (fallback)...');
     try {
       const command = 'git rm -rf --cached --ignore-unmatch .github/workflows';
