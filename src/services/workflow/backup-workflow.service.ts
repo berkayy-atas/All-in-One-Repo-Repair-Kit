@@ -228,10 +228,11 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
 `.trim();
     }
     
-    // DEĞİŞİKLİK 1: Ana başlığı mesajdan ayırın
-    const title = '🛡️ iCredible Git Security - Backup Summary';
 
-    const summaryMessage = `✅ **Backup completed successfully!**
+    const summaryMessage = `
+'🛡️ iCredible Git Security - Backup Summary'
+
+✅ **Backup completed successfully!**
 --------------------------------------------------
 **Git Metadata**
 Repository: ${process.env.GITHUB_REPOSITORY}
