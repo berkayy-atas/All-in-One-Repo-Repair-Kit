@@ -1,6 +1,6 @@
 import { context } from '@actions/github';
 import { ILogger } from '../base/interfaces';
-import { GitHubActionsLogger } from '@/utils/logger';
+import { GitHubActionsLogger } from '../../utils/logger';
 import { ConfigService } from '../config/config.service';
 import { ValidationService } from '../validation/validation.service';
 import { CryptoService } from '../crypto/crypto.service';
@@ -67,7 +67,7 @@ export class ServiceContainer {
 
     if (!this.services.has('api')) {
       const config = this.getConfigService();
-      this.services.set('api', new ApiClientService(this.logger, config, config.getApiConfig().timeout));
+      this.services.set('api', new ApiClientService(this.logger, config));
     }
     return this.services.get('api');
   }

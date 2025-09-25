@@ -4,7 +4,6 @@ import { GitHubService } from '../github/github.service';
 import { IApiClient, ILogger } from '../base/interfaces';
 import * as core from '@actions/core';
 
-
 import {
   AuthTokenResponse,
   BackupUploadResponse,
@@ -13,31 +12,28 @@ import {
   FileUploadData,
   ApiResponse,
   AuthTokenRequest,
-} from '@/types/api';
+} from '../../types/api';
 import axios , { AxiosInstance } from 'axios';
 import { context } from '@actions/github';
 import { ConfigService } from '../config/config.service';
+import { ApiConfig } from '../../types/config';
 
 
 export class ApiClientService extends BaseService implements IApiClient {
   private configService: ConfigService;
-  private baseUrl: string;
-  private timeout: number;
-  private userAgent: string;
+  private apiConfig: ApiConfig;
   private axiosInstance: AxiosInstance;
 
-  constructor(logger: ILogger, configService: ConfigService, timeout: number = 30000) {
+  constructor(logger: ILogger, configService: ConfigService) {
     super(logger);
     this.configService = configService;
-    this.timeout = timeout;
-    this.baseUrl = configService.getApiConfig().baseUrl;
-    this.userAgent = configService.getApiConfig().UserAgent;
+    this.apiConfig = configService.getApiConfig();
 
      this.axiosInstance = axios.create({
-      baseURL: this.baseUrl,
-      timeout: this.timeout,
+      baseURL: this.apiConfig.baseUrl,
+      timeout: this.apiConfig.timeout,
       headers: {
-        'User-Agent': this.userAgent,
+        'User-Agent': this.apiConfig.userAgent,
       },
     });
 

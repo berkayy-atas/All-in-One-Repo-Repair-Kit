@@ -27,13 +27,17 @@ describe('ValidationService', () => {
     it('should reject passwords without uppercase letters', () => {
       expect(() => {
         validationService.validatePassword('mypassword123!');
-      }).toThrow('Encryption password must contain at least one uppercase letter');
+      }).toThrow(
+        'Encryption password must contain at least one uppercase letter'
+      );
     });
 
     it('should reject passwords without lowercase letters', () => {
       expect(() => {
         validationService.validatePassword('MYPASSWORD123!');
-      }).toThrow('Encryption password must contain at least one lowercase letter');
+      }).toThrow(
+        'Encryption password must contain at least one lowercase letter'
+      );
     });
 
     it('should reject passwords without digits', () => {
@@ -45,13 +49,17 @@ describe('ValidationService', () => {
     it('should reject passwords without special characters', () => {
       expect(() => {
         validationService.validatePassword('MyPassword123');
-      }).toThrow('Encryption password must contain at least one special character');
+      }).toThrow(
+        'Encryption password must contain at least one special character'
+      );
     });
 
     it('should reject passwords with forbidden characters', () => {
       expect(() => {
         validationService.validatePassword('MyPassword123!🚀');
-      }).toThrow('Encryption password can only contain alphanumeric characters');
+      }).toThrow(
+        'Encryption password can only contain alphanumeric characters'
+      );
     });
 
     it('should reject empty passwords', () => {
@@ -103,7 +111,9 @@ describe('ValidationService', () => {
     it('should reject invalid OTP methods', () => {
       expect(() => {
         validationService.validateOtpMethod('INVALID');
-      }).toThrow("Invalid otp_delivery_method. Must be 'MAIL' or 'AUTHENTICATOR'");
+      }).toThrow(
+        "Invalid otp_delivery_method. Must be 'MAIL' or 'AUTHENTICATOR'"
+      );
     });
   });
 
@@ -121,17 +131,23 @@ describe('ValidationService', () => {
     it('should reject missing file version ID', () => {
       expect(() => {
         validationService.validateRestoreInputs('', true);
-      }).toThrow("Input 'file_version_id' is required when action is 'restore'");
+      }).toThrow(
+        "Input 'file_version_id' is required when action is 'restore'"
+      );
 
       expect(() => {
         validationService.validateRestoreInputs(undefined, true);
-      }).toThrow("Input 'file_version_id' is required when action is 'restore'");
+      }).toThrow(
+        "Input 'file_version_id' is required when action is 'restore'"
+      );
     });
 
     it('should reject missing suspend actions', () => {
       expect(() => {
         validationService.validateRestoreInputs('file-123', undefined);
-      }).toThrow("Input 'suspend_actions' is required when action is 'restore'");
+      }).toThrow(
+        "Input 'suspend_actions' is required when action is 'restore'"
+      );
     });
 
     it('should reject invalid suspend actions type', () => {

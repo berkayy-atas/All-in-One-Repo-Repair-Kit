@@ -25,6 +25,7 @@ module.exports = {
   verbose: true,
   clearMocks: true,
   moduleNameMapping: {
-    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@/(.*)$': '<rootDir>/src/$1'
   },
+  moduleDirectories: ['node_modules', 'src']
 };

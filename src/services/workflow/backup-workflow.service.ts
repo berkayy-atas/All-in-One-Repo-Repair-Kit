@@ -10,9 +10,9 @@ import {
   IGitService, 
   IApiClient 
 } from '../base/interfaces';
-import { BackupResult } from '@/types/github';
+import { BackupResult, CommitInfo } from '../../types/github';
 import { AuthTokenResponse, FileUploadData } from '@/types/api';
-import { BackupUtils } from '@/utils/backup';
+import { DataMapper } from '../../utils/data.mapper';
 
 export class BackupWorkflowService extends BaseService implements IBackupWorkflowService {
   private configService: IConfigService;
@@ -60,7 +60,7 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
 
       // Step 2: Get commit information
       this.logger.info('Step 2: Gathering commit information');
-      const commitInfo = await this.gitService.getCurrentCommitInfo();
+      const commitInfo : CommitInfo = await this.gitService.getCurrentCommitInfo();
 
       // Step 3: Create tar archive
       this.logger.info('Step 3: Creating tar archive');
@@ -93,7 +93,7 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
 
       // Step 7: Upload backup
       this.logger.info('Step 7: Uploading backup to iCredible');
-      const uploadData : FileUploadData = BackupUtils.createUploadData(
+      const uploadData : FileUploadData = DataMapper.createUploadData(
         encryptedBuffer,
         encryptedFilePath,
         uncompressedSize,
@@ -150,8 +150,6 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
       };
     }
   }
-
-
 
   private displayBackupSummary(summary: {
     recordId: string;

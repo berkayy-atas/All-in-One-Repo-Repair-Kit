@@ -170,7 +170,6 @@ public async pushAllBranches(repoPath: string, remoteUrl: string): Promise<void>
     }
   }
 
-
   public async syncRemoteBranches(repoPath: string): Promise<void> {
     this.ensureInitialized();
 

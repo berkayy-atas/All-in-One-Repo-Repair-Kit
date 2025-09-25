@@ -1,7 +1,7 @@
 import { ServiceContainer } from '../services/container/service-container';
 
 // Mock environment variables for testing
-process.env.INPUT_ICREDIBLE_ACTIVATION_CODE = 'test-activation-code';
+process.env.INPUT_ICREDIBLE_ACTIVATION_CODE = 'activation-code';
 process.env.INPUT_ICREDIBLE_ENCRYPTION_PASSWORD = 'TestPassword123!';
 process.env.INPUT_ACTION = 'backup';
 process.env.INPUT_SUSPEND_ACTIONS = 'true';
@@ -11,8 +11,9 @@ process.env.GITHUB_REPOSITORY = 'test-owner/test-repo';
 describe('ServiceContainer', () => {
   let container: ServiceContainer;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     container = new ServiceContainer();
+    await container.initializeServices();
   });
 
   afterEach(() => {
@@ -102,7 +103,7 @@ describe('ServiceContainer', () => {
       const service1 = container.getGitHubService('test-token-123');
       const service2 = container.getGitHubService('test-token-123');
       const service3 = container.getGitHubService('different-token');
-      
+
       expect(service1).toBe(service2);
       expect(service1).not.toBe(service3);
     });

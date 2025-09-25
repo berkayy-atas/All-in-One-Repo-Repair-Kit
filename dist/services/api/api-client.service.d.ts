@@ -1,14 +1,12 @@
 import { BaseService } from '../base/base-service';
 import { IApiClient, ILogger } from '../base/interfaces';
-import { AuthTokenResponse, BackupUploadResponse, OtpResponse, OtpStatusResponse, FileUploadData } from '@/types/api';
+import { AuthTokenResponse, BackupUploadResponse, OtpResponse, OtpStatusResponse, FileUploadData } from '../../types/api';
 import { ConfigService } from '../config/config.service';
 export declare class ApiClientService extends BaseService implements IApiClient {
     private configService;
-    private baseUrl;
-    private timeout;
-    private userAgent;
+    private apiConfig;
     private axiosInstance;
-    constructor(logger: ILogger, configService: ConfigService, timeout?: number);
+    constructor(logger: ILogger, configService: ConfigService);
     protected onInitialize(): Promise<void>;
     authenticate(activationCode: string): Promise<AuthTokenResponse>;
     uploadBackup(uploadData: FileUploadData, token: string): Promise<BackupUploadResponse>;

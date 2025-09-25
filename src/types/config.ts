@@ -12,7 +12,7 @@ export interface ApiConfig {
   baseUrl: string;
   managementBaseUrl: string;
   timeout: number;
-  UserAgent: string;
+  userAgent: string;
 }
 
 export interface CryptoConfig {

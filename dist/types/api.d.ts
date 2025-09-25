@@ -99,9 +99,9 @@ export interface FileUploadData {
     attributes: number;
     fileName: string;
     fullPath: string;
-    compressionEngine: CompressionEngine | keyof typeof CompressionEngine | number;
-    compressionLevel: CompressionLevel | keyof typeof CompressionLevel | number;
-    encryptionType: EncryptionType | keyof typeof EncryptionType | number;
+    compressionEngine: CompressionEngine | keyof typeof CompressionEngine | string;
+    compressionLevel: CompressionLevel | keyof typeof CompressionLevel | string;
+    encryptionType: EncryptionType | keyof typeof EncryptionType | string;
     revisionType: number;
     metadata: BackupMetadata;
 }

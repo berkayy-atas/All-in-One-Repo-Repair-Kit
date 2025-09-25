@@ -46,7 +46,9 @@ export class ConsoleLogger implements ILogger {
     console.error(`[ERROR] ${message}`);
     if (error) {
       // eslint-disable-next-line no-console
-      console.error(`[ERROR] Stack: ${error.stack || 'No stack trace available'}`);
+      console.error(
+        `[ERROR] Stack: ${error.stack || 'No stack trace available'}`
+      );
     }
   }
 
