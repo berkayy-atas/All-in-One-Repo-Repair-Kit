@@ -139,7 +139,7 @@ export class GitService extends BaseService implements IGitService {
       this.logger.info('Pushing mirror to remote repository (used for default token)');
       
       await exec('git', ['push', '--mirror', '--force', remoteUrl], { cwd: repoPath });
-      this.logger.info('Mirror push completed successfully');
+      this.logger.warn('The repository will be restored without the ./.github/workflow directory. If you want to restore this directory, you can find the relevant steps at the following link: https://github.com/marketplace/actions/icredible-git-security#-personal-access-token-pat-setup-guide-for-repository-restore');
     } catch (error) {
       this.handleError(error, 'Failed to push mirror');
     }
