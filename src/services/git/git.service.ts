@@ -17,7 +17,9 @@ export class GitService extends BaseService implements IGitService {
     // Verify git is available
     try {
       await exec('git', ['--version'], { silent: true });
-      await this.setupGitFilterRepo();
+      if(core.getInput('action', { required: true }) == "restore"){
+        await this.setupGitFilterRepo();
+      }
     } catch (error) {
       throw new Error('Git is not available in the environment');
     }
@@ -219,7 +221,6 @@ public async pushAllBranches(repoPath: string, remoteUrl: string): Promise<void>
       await exec('python3', ['--version'], { silent: true });
       await exec('pip3', ['--version'], { silent: true });
 
-      // git-filter-repo'yu pip ile kur
       await exec('pip3', ['install', 'git-filter-repo']);
       
       this.isFilterRepoAvailable = true;
