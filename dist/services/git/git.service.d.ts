@@ -16,5 +16,6 @@ export declare class GitService extends BaseService implements IGitService {
     filterWorkflowDirectory(repoPath: string): Promise<void>;
     hasCommits(repoPath?: string): Promise<boolean>;
     getCurrentBranch(repoPath?: string): Promise<string>;
+    configureAndPush(config: any, hasPatToken: boolean): Promise<void>;
 }
 //# sourceMappingURL=git.service.d.ts.map

@@ -3,10 +3,11 @@ import { IApiClient, ILogger } from '../base/interfaces';
 import { AuthTokenResponse, BackupUploadResponse, OtpResponse, OtpStatusResponse, FileUploadData } from '@/types/api';
 import { ConfigService } from '../config/config.service';
 export declare class ApiClientService extends BaseService implements IApiClient {
-    private httpClient;
     private configService;
     private baseUrl;
     private timeout;
+    private userAgent;
+    private axiosInstance;
     constructor(logger: ILogger, configService: ConfigService, timeout?: number);
     protected onInitialize(): Promise<void>;
     authenticate(activationCode: string): Promise<AuthTokenResponse>;

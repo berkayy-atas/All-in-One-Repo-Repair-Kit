@@ -37,6 +37,9 @@ export interface ICryptoService extends IService {
   hashPassword(password: string): string;
   encrypt(inputBuffer: Buffer, password: string): Promise<Buffer>;
   decrypt(encryptedBuffer: Buffer, password: string): Promise<Buffer>;
+  decryptBackup(encryptedBuffer: Buffer, password: string): Promise<Buffer>;
+  encryptArchive(filePath: string, password: string): Promise<Buffer>;
+  getEncryptedFileName(password: string): string;
 }
 
 // Compression service interface
@@ -57,6 +60,7 @@ export interface IGitService extends IService {
   pushAllBranches(repoPath: string, remoteUrl: string): Promise<void>;
   syncRemoteBranches(repoPath: string): Promise<void>;
   filterWorkflowDirectory(repoPath: string): Promise<void>;
+  configureAndPush(config: any, hasPatToken: boolean): Promise<void>;
 }
 
 // API client interface

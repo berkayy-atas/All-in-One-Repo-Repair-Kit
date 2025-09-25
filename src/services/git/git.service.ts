@@ -1,3 +1,5 @@
+import * as core from '@actions/core';
+import { context } from '@actions/github';
 import { exec } from '@actions/exec';
 import { BaseService } from '../base/base-service';
 import { IGitService, ILogger } from '../base/interfaces';
@@ -308,4 +310,34 @@ public async pushAllBranches(repoPath: string, remoteUrl: string): Promise<void>
       this.handleError(error, 'Failed to get current branch');
     }
   }
+
+   public async configureAndPush(config: any, hasPatToken: boolean): Promise<void> {
+      const repoPath = config.files.sourceArchiveDir;
+      
+      await this.configureGit(config.git.userName, config.git.userEmail);
+      
+      const token = hasPatToken 
+        ? config.inputs.icredible_repository_restore_token 
+        : core.getInput('github-token', { required: true });
+      
+      if (!token) {
+        throw new Error('No GitHub token available for pushing');
+      }
+  
+      // Build authenticated remote URL
+      const remoteUrl = `https://x-access-token:${token}@github.com/${context.repo.owner}/${context.repo.repo}.git`;
+      
+      // // Set remote URL
+      // await this.gitService.setRemoteUrl(repoPath, remoteUrl);
+      
+      // Push based on token type
+      if (hasPatToken) {
+        // PAT token can use mirror push
+      await this.pushAllBranches(repoPath, remoteUrl);
+  
+      } else {
+        // Default token push all branches individually
+        await this.pushMirror(repoPath, remoteUrl);
+      }
+    }
 }

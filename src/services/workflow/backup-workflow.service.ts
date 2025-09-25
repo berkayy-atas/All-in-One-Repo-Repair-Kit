@@ -11,8 +11,8 @@ import {
   IApiClient 
 } from '../base/interfaces';
 import { BackupResult } from '@/types/github';
-import { AuthTokenResponse, BackupMetadata, FileUploadData } from '@/types/api';
-import { exec } from '@actions/exec';
+import { AuthTokenResponse, FileUploadData } from '@/types/api';
+import { BackupUtils } from '@/utils/backup';
 
 export class BackupWorkflowService extends BaseService implements IBackupWorkflowService {
   private configService: IConfigService;
@@ -78,19 +78,14 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
 
       // Step 5: Encrypt the compressed archive
       this.logger.info('Step 5: Encrypting compressed archive');
-      const encryptedBuffer = await this.encryptArchive(
+      const encryptedBuffer = await this.cryptoService.encryptArchive(
       config.files.compressedArchiveFile,
       config.inputs.icredible_encryption_password
       );
 
-      const encryptedFilePath = this.getEncryptedFileName(config.inputs.icredible_encryption_password);
+      const encryptedFilePath = this.cryptoService.getEncryptedFileName(config.inputs.icredible_encryption_password);
       await fs.writeFile(encryptedFilePath, encryptedBuffer);
       const encryptedSize = encryptedBuffer.length;
-      
-      // this.logger.info(`${encryptedSize}`);
-      // const aa = await exec('ls', ['-la']);
-      // this.logger.info(`${aa}`);
-      
 
       // Step 6: Authenticate with API
       this.logger.info('Step 6: Authenticating with iCredible API');
@@ -98,7 +93,7 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
 
       // Step 7: Upload backup
       this.logger.info('Step 7: Uploading backup to iCredible');
-      const uploadData = this.createUploadData(
+      const uploadData : FileUploadData = BackupUtils.createUploadData(
         encryptedBuffer,
         encryptedFilePath,
         uncompressedSize,
@@ -156,55 +151,8 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
     }
   }
 
-  private async encryptArchive(filePath: string, password: string): Promise<Buffer> {
-    const fileBuffer = await fs.readFile(filePath);
-    const hashedPassword = this.cryptoService.hashPassword(password);
-    return await this.cryptoService.encrypt(fileBuffer, hashedPassword);
-  }
 
-  private getEncryptedFileName(password: string): string {
-    const repoName = process.env.GITHUB_REPOSITORY?.split('/').pop() || 'repository';
-    return `${repoName}.tar.zst.enc`;
-  }
 
-  private createUploadData(
-    encryptedBuffer: Buffer,
-    fileName: string,
-    originalSize: number,
-    encryptedSize: number,
-    commitInfo: any,
-    config: any
-  ): FileUploadData {
-    const metadata: BackupMetadata = {
-      event: context.eventName,
-      ref: context.ref,
-      actor: context.actor,
-      owner: context.repo.owner,
-      ownerType: process.env.OWNER_TYPE || 'User',
-      commit: commitInfo.hash,
-      commitShort: commitInfo.shortHash,
-      parents: commitInfo.parents,
-      author: commitInfo.author,
-      date: commitInfo.date,
-      committer: commitInfo.author, // Using author as committer for simplicity
-      message: commitInfo.message,
-    };
-
-    return {
-      file: encryptedBuffer,
-      size: originalSize,
-      compressedFileSize: encryptedSize,
-      attributes: config.upload.attributes,
-      fileName: `${fileName}`,
-      fullPath: `/${context.repo.owner}/${context.repo.repo}/${fileName}`,
-      compressionEngine: config.upload.compressionEngine,
-      compressionLevel: config.upload.compressionLevel,
-      encryptionType: config.upload.encryptionType,
-      revisionType: config.upload.revisionType,
-      metadata,
-    };
-  }
- 
   private displayBackupSummary(summary: {
     recordId: string;
     directoryRecordId: string;
@@ -250,21 +198,12 @@ ${uploadMetadata}
     this.logger.notice(summaryMessage);
   }
 
-
-  private formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  }
-
   private async cleanupTemporaryFiles(config: any): Promise<void> {
     const filesToClean = [
       config.files.sourceArchiveDir,
       config.files.tarArchiveFile,
       config.files.compressedArchiveFile,
-      this.getEncryptedFileName(config.inputs.icredible_encryption_password),
+      this.cryptoService.getEncryptedFileName(config.inputs.icredible_encryption_password),
     ];
 
     for (const file of filesToClean) {

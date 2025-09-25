@@ -10,11 +10,7 @@ export declare class BackupWorkflowService extends BaseService implements IBacku
     constructor(logger: ILogger, configService: IConfigService, cryptoService: ICryptoService, compressionService: ICompressionService, gitService: IGitService, apiClient: IApiClient);
     protected onInitialize(): Promise<void>;
     execute(): Promise<BackupResult>;
-    private encryptArchive;
-    private getEncryptedFileName;
-    private createUploadData;
     private displayBackupSummary;
-    private formatBytes;
     private cleanupTemporaryFiles;
 }
 //# sourceMappingURL=backup-workflow.service.d.ts.map

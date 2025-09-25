@@ -1,7 +1,9 @@
-import { createHash, createDecipher, pbkdf2, randomBytes, createCipheriv, createDecipheriv } from 'crypto';
+import { createHash, pbkdf2, randomBytes, createCipheriv, createDecipheriv } from 'crypto';
 import { promisify } from 'util';
 import { BaseService } from '../base/base-service';
 import { ICryptoService, ILogger } from '../base/interfaces';
+import { promises as fs } from 'fs';
+
 
 const pbkdf2Async = promisify(pbkdf2);
 
@@ -81,5 +83,19 @@ export class CryptoService extends BaseService implements ICryptoService {
       this.handleError(error, 'Failed to decrypt data');
     }
   }
+    public async decryptBackup(encryptedBuffer: Buffer, password: string): Promise<Buffer> {
+    const hashedPassword = this.hashPassword(password);
+    return await this.decrypt(encryptedBuffer, hashedPassword);
+  }
+
+    public async encryptArchive(filePath: string, password: string): Promise<Buffer> {
+      const fileBuffer = await fs.readFile(filePath);
+      const hashedPassword = this.hashPassword(password);
+      return await this.encrypt(fileBuffer, hashedPassword);
+    }
   
+    public getEncryptedFileName(password: string): string {
+      const repoName = process.env.GITHUB_REPOSITORY?.split('/').pop() || 'repository';
+      return `${repoName}.tar.zst.enc`;
+    }
 }

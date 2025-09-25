@@ -1,9 +1,7 @@
-import { HttpClient } from '@actions/http-client';
-import { BearerCredentialHandler } from '@actions/http-client/lib/auth';
 import FormData from 'form-data';
 import { BaseService } from '../base/base-service';
 import { GitHubService } from '../github/github.service';
-import { IApiClient, IGitHubService, ILogger } from '../base/interfaces';
+import { IApiClient, ILogger } from '../base/interfaces';
 import * as core from '@actions/core';
 
 
@@ -16,37 +14,43 @@ import {
   ApiResponse,
   AuthTokenRequest,
 } from '@/types/api';
-import axios from 'axios';
+import axios , { AxiosInstance } from 'axios';
 import { context } from '@actions/github';
 import { ConfigService } from '../config/config.service';
 
 
 export class ApiClientService extends BaseService implements IApiClient {
-  private httpClient: HttpClient;
   private configService: ConfigService;
   private baseUrl: string;
   private timeout: number;
+  private userAgent: string;
+  private axiosInstance: AxiosInstance;
 
   constructor(logger: ILogger, configService: ConfigService, timeout: number = 30000) {
     super(logger);
     this.configService = configService;
     this.timeout = timeout;
     this.baseUrl = configService.getApiConfig().baseUrl;
-    this.httpClient = new HttpClient('iCredible-Git-Security/2.0', undefined, {
-      allowRetries: true,
-      maxRetries: 3,
+    this.userAgent = configService.getApiConfig().UserAgent;
+
+     this.axiosInstance = axios.create({
+      baseURL: this.baseUrl,
+      timeout: this.timeout,
+      headers: {
+        'User-Agent': this.userAgent,
+      },
     });
+
+    this.axiosInstance.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        this.handleAxiosError(error, 'API request failed');
+      }
+    );
+    
   }
 
   protected async onInitialize(): Promise<void> {
-    // Test HTTP client functionality
-    try {
-      await this.httpClient.get(`${this.baseUrl}/health`, {
-        'User-Agent': 'iCredible-Git-Security/2.0',
-      });
-    } catch (error) {
-      this.logger.warn('Health check failed, continuing anyway');
-    }
   }
 
 
@@ -73,13 +77,9 @@ export class ApiClientService extends BaseService implements IApiClient {
         ...activationDetails,
     };
 
-      const response = await axios.post(
-        `${this.baseUrl}/endpoint/activation`,
-        requestBody,
-        {
-          timeout: this.timeout,
-          headers: { 'User-Agent': 'iCredible-Git-Security/2.0' },
-        }
+      const response = await this.axiosInstance.post(
+        '/endpoint/activation',
+        requestBody
       );
 
       const apiResponse: ApiResponse<AuthTokenResponse> = response.data;
@@ -138,10 +138,14 @@ export class ApiClientService extends BaseService implements IApiClient {
         ...form.getHeaders(),
       };
 
-      const response = await axios.post(
-        `${this.baseUrl}/backup/shield`,
+      const response = await this.axiosInstance.post(
+        '/backup/shield',
         form,
-        { headers: headers, maxContentLength: Infinity, maxBodyLength: Infinity }
+        { 
+          headers: headers, 
+          maxContentLength: Infinity, 
+          maxBodyLength: Infinity 
+        }
       );
 
       const apiResponse: ApiResponse<BackupUploadResponse> = response.data;
@@ -177,14 +181,12 @@ export class ApiClientService extends BaseService implements IApiClient {
         OtpGenerationMode: 'Number',
       };
 
-      const response = await axios.post(
-        `${this.baseUrl}/OTP/Send`,
+      const response = await this.axiosInstance.post(
+        '/OTP/Send',
         requestBody,
         {
-          timeout: this.timeout,
           headers: {
             'Authorization': `Bearer ${token}`,
-            'User-Agent': 'iCredible-Git-Security/2.0',
           },
         }
       );
@@ -206,14 +208,12 @@ export class ApiClientService extends BaseService implements IApiClient {
     try {
       const requestBody = { uniqueKey: uniqueKey };
 
-      const response = await axios.post(
-        `${this.baseUrl}/OTP/GetOTPStatus`,
+      const response = await this.axiosInstance.post(
+        '/OTP/GetOTPStatus',
         requestBody,
         {
-          timeout: this.timeout,
           headers: {
             'Authorization': `Bearer ${token}`,
-            'User-Agent': 'iCredible-Git-Security/2.0',
           },
         }
       );
@@ -231,15 +231,13 @@ export class ApiClientService extends BaseService implements IApiClient {
     try {
       this.logger.info(`Downloading backup with version ID: ${fileVersionId}`);
       
-      const response = await axios.get(
-        `${this.baseUrl}/restore/${fileVersionId}`,
+      const response = await this.axiosInstance.get(
+        `/restore/${fileVersionId}`,
         {
-          timeout: this.timeout,
           headers: {
             'Authorization': `Bearer ${token}`,
             'X-Unique-Key': uniqueKey,
-            'X-Verification-Key': 1,
-            'User-Agent': 'iCredible-Git-Security/2.0',
+            'X-Verification-Key': '1',
           },
           responseType: 'arraybuffer',
         }

@@ -12,8 +12,6 @@ export declare class RestoreWorkflowService extends BaseService implements IRest
     constructor(logger: ILogger, configService: IConfigService, cryptoService: ICryptoService, compressionService: ICompressionService, gitService: IGitService, apiClient: IApiClient, otpService: IOtpService, githubService?: IGitHubService);
     protected onInitialize(): Promise<void>;
     execute(fileVersionId: string): Promise<RestoreResult>;
-    private decryptBackup;
-    private configureAndPush;
     private displayRestoreSummary;
     private cleanupTemporaryFiles;
 }

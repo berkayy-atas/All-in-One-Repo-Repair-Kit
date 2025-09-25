@@ -1,4 +1,3 @@
-import * as core from '@actions/core';
 import { promises as fs } from 'fs';
 import { context } from '@actions/github';
 import { BaseService } from '../base/base-service';
@@ -98,7 +97,7 @@ export class RestoreWorkflowService extends BaseService implements IRestoreWorkf
 
       // Step 5: Decrypt backup
       this.logger.info('Step 5: Decrypting backup archive');
-      const compressedBuffer = await this.decryptBackup(
+      const compressedBuffer = await this.cryptoService.decryptBackup(
         encryptedBuffer,
         config.inputs.icredible_encryption_password
       );
@@ -137,7 +136,7 @@ export class RestoreWorkflowService extends BaseService implements IRestoreWorkf
 
       // Step 10: Configure git and push
       this.logger.info('Step 10: Configuring git and pushing to repository');
-      await this.configureAndPush(config, hasPatToken);
+      await this.gitService.configureAndPush(config, hasPatToken);
 
       // Step 11: Resume GitHub Actions if they were suspended
       if (actionsWereSuspended && this.githubService) {
@@ -191,41 +190,6 @@ export class RestoreWorkflowService extends BaseService implements IRestoreWorkf
         message: `Restore failed: ${errorMessage}`,
         error: error instanceof Error ? error : new Error(errorMessage),
       };
-    }
-  }
-
-  private async decryptBackup(encryptedBuffer: Buffer, password: string): Promise<Buffer> {
-    const hashedPassword = this.cryptoService.hashPassword(password);
-    return await this.cryptoService.decrypt(encryptedBuffer, hashedPassword);
-  }
-
-  private async configureAndPush(config: any, hasPatToken: boolean): Promise<void> {
-    const repoPath = config.files.sourceArchiveDir;
-    
-    await this.gitService.configureGit(config.git.userName, config.git.userEmail);
-    
-    const token = hasPatToken 
-      ? config.inputs.icredible_repository_restore_token 
-      : core.getInput('github-token', { required: true });
-    
-    if (!token) {
-      throw new Error('No GitHub token available for pushing');
-    }
-
-    // Build authenticated remote URL
-    const remoteUrl = `https://x-access-token:${token}@github.com/${context.repo.owner}/${context.repo.repo}.git`;
-    
-    // // Set remote URL
-    // await this.gitService.setRemoteUrl(repoPath, remoteUrl);
-    
-    // Push based on token type
-    if (hasPatToken) {
-      // PAT token can use mirror push
-    await this.gitService.pushAllBranches(repoPath, remoteUrl);
-
-    } else {
-      // Default token push all branches individually
-      await this.gitService.pushMirror(repoPath, remoteUrl);
     }
   }
 
