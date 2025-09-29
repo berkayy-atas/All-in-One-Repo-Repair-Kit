@@ -176,7 +176,6 @@ src/
 ⚠️ **Minor Breaking Changes** (approved for v2.0):
 
 1. **Enhanced Error Messages**: More detailed error messages with suggestions
-2. **Bundle Optimization**: Removed Python `git-filter-repo` dependency 
 
 ### Compatibility
 

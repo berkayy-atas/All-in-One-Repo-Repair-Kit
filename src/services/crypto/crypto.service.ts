@@ -42,7 +42,7 @@ export class CryptoService extends BaseService implements ICryptoService {
       const ivLength = 16;
       const keyLength = 32;
       const iterations = 100000;
-      const algorithm = 'aes-256-cbc';
+      const algorithm = 'aes-256-gcm';
       const digest = 'sha256';
 
       const salt = randomBytes(saltLength);
@@ -66,7 +66,7 @@ export class CryptoService extends BaseService implements ICryptoService {
       const ivLength = 16;
       const keyLength = 32;
       const iterations = 100000;
-      const algorithm = 'aes-256-cbc';
+      const algorithm = 'aes-256-gcm';
       const digest = 'sha256';
 
       const salt = encryptedBuffer.subarray(8, 8 + saltLength);
