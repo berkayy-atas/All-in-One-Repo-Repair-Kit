@@ -35,54 +35,65 @@ export class CryptoService extends BaseService implements ICryptoService {
     }
   }
 
-  public async encrypt(inputBuffer: Buffer, password: string): Promise<Buffer> {
-    this.ensureInitialized();
-    try {
-      const saltLength = 8;
-      const ivLength = 16;
-      const keyLength = 32;
-      const iterations = 100000;
-      const algorithm = 'aes-256-gcm';
-      const digest = 'sha256';
+public async encrypt(inputBuffer: Buffer, password: string): Promise<Buffer> {
+  this.ensureInitialized();
+  try {
+    const saltLength = 8;
+    const ivLength = 16;
+    const keyLength = 32;
+    const iterations = 100000;
+    const algorithm = 'aes-256-gcm';
+    const digest = 'sha256';
+    const authTagLength = 16; // GCM authentication tag is 16 bytes
 
-      const salt = randomBytes(saltLength);
-      const key = await pbkdf2Async(password, salt, iterations, keyLength, digest);
-      const iv = randomBytes(ivLength);
-      const cipher = createCipheriv(algorithm, key, iv);
-      const encryptedData = Buffer.concat([cipher.update(inputBuffer), cipher.final()]);
-      
-     
-      return Buffer.concat([Buffer.from('Salted__'), salt, iv, encryptedData]);
-    } catch (error) {
-      this.handleError(error, 'Failed to encrypt data');
-    }
+    const salt = randomBytes(saltLength);
+    const key = await pbkdf2Async(password, salt, iterations, keyLength, digest);
+    const iv = randomBytes(ivLength);
+    
+    const cipher = createCipheriv(algorithm, key, iv);
+    const encryptedData = Buffer.concat([cipher.update(inputBuffer), cipher.final()]);
+    
+    // Get the authentication tag after encryption is complete
+    const authTag = cipher.getAuthTag();
+    
+    // Include authTag in the output: Salted__ + salt + iv + authTag + encryptedData
+    return Buffer.concat([Buffer.from('Salted__'), salt, iv, authTag, encryptedData]);
+  } catch (error) {
+    this.handleError(error, 'Failed to encrypt data');
   }
+}
 
 
   public async decrypt(encryptedBuffer: Buffer, password: string): Promise<Buffer> {
-    this.ensureInitialized();
-    try {
-      const saltLength = 8;
-      const ivLength = 16;
-      const keyLength = 32;
-      const iterations = 100000;
-      const algorithm = 'aes-256-gcm';
-      const digest = 'sha256';
+  this.ensureInitialized();
+  try {
+    const saltLength = 8;
+    const ivLength = 16;
+    const keyLength = 32;
+    const iterations = 100000;
+    const algorithm = 'aes-256-gcm';
+    const digest = 'sha256';
+    const authTagLength = 16; // GCM authentication tag is 16 bytes
 
-      const salt = encryptedBuffer.subarray(8, 8 + saltLength);
-      const iv = encryptedBuffer.subarray(8 + saltLength, 8 + saltLength + ivLength);
-      const encryptedData = encryptedBuffer.subarray(8 + saltLength + ivLength);
+    // Calculate positions in the buffer
+    const salt = encryptedBuffer.subarray(8, 8 + saltLength);
+    const iv = encryptedBuffer.subarray(8 + saltLength, 8 + saltLength + ivLength);
+    const authTag = encryptedBuffer.subarray(8 + saltLength + ivLength, 8 + saltLength + ivLength + authTagLength);
+    const encryptedData = encryptedBuffer.subarray(8 + saltLength + ivLength + authTagLength);
 
-      const key = await pbkdf2Async(password, salt, iterations, keyLength, digest);
+    const key = await pbkdf2Async(password, salt, iterations, keyLength, digest);
 
-      const decipher = createDecipheriv(algorithm, key, iv);
+    const decipher = createDecipheriv(algorithm, key, iv);
+    
+    // Set the authentication tag before decryption
+    decipher.setAuthTag(authTag);
 
-      const decryptedData = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
-      return decryptedData;
-    } catch (error) {
-      this.handleError(error, 'Failed to decrypt data');
-    }
+    const decryptedData = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
+    return decryptedData;
+  } catch (error) {
+    this.handleError(error, 'Failed to decrypt data');
   }
+}
     public async decryptBackup(encryptedBuffer: Buffer, password: string): Promise<Buffer> {
     const hashedPassword = this.hashPassword(password);
     return await this.decrypt(encryptedBuffer, hashedPassword);
