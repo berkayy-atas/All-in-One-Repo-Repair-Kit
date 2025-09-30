@@ -67,10 +67,15 @@ export class ConfigService extends BaseService implements IConfigService {
         userAgent: 'iCredible-Git-Security/2.0',
       },
       crypto: {
-        algorithm: 'aes-256-cbc',
+        algorithm: 'aes-256-gcm',
         keyDerivation: 'pbkdf2',
         compressionLevel: 10,
-        hashAlgorithm: 'sha256',
+        digest: 'sha256',
+        saltLength: 8,
+        ivLength: 16,
+        keyLength: 32,
+        iterations: 100000,
+        authTagLength: 16,
       },
       files: {
         sourceArchiveDir: 'repo-mirror',

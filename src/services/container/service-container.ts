@@ -44,7 +44,8 @@ export class ServiceContainer {
 
   public getCryptoService(): CryptoService {
     if (!this.services.has('crypto')) {
-      this.services.set('crypto', new CryptoService(this.logger));
+      const cryptoConfig = this.getConfigService().getCryptoConfig();
+      this.services.set('crypto', new CryptoService(this.logger, cryptoConfig));
     }
     return this.services.get('crypto');
   }

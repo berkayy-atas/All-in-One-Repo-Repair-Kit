@@ -3,14 +3,17 @@ import { promisify } from 'util';
 import { BaseService } from '../base/base-service';
 import { ICryptoService, ILogger } from '../base/interfaces';
 import { promises as fs } from 'fs';
+import { CryptoConfig } from '@/types/config';
 
 
 const pbkdf2Async = promisify(pbkdf2);
 
 export class CryptoService extends BaseService implements ICryptoService {
+  private cryptoConfig: CryptoConfig;
 
-  constructor(logger: ILogger) {
+  constructor(logger: ILogger, cryptoConfig: CryptoConfig) {
     super(logger);
+    this.cryptoConfig = cryptoConfig;
   }
 
   protected async onInitialize(): Promise<void> {
@@ -38,22 +41,13 @@ export class CryptoService extends BaseService implements ICryptoService {
 public async encrypt(inputBuffer: Buffer, password: string): Promise<Buffer> {
   this.ensureInitialized();
   try {
-    const saltLength = 8;
-    const ivLength = 16;
-    const keyLength = 32;
-    const iterations = 100000;
-    const algorithm = 'aes-256-gcm';
-    const digest = 'sha256';
-    const authTagLength = 16; // GCM authentication tag is 16 bytes
-
-    const salt = randomBytes(saltLength);
-    const key = await pbkdf2Async(password, salt, iterations, keyLength, digest);
-    const iv = randomBytes(ivLength);
+    const salt = randomBytes(this.cryptoConfig.saltLength);
+    const key = await pbkdf2Async(password, salt, this.cryptoConfig.iterations, this.cryptoConfig.keyLength, this.cryptoConfig.digest);
+    const iv = randomBytes(this.cryptoConfig.ivLength);
     
-    const cipher = createCipheriv(algorithm, key, iv);
+    const cipher = createCipheriv(this.cryptoConfig.algorithm, key, iv);
     const encryptedData = Buffer.concat([cipher.update(inputBuffer), cipher.final()]);
     
-    // Get the authentication tag after encryption is complete
     const authTag = cipher.getAuthTag();
     
     // Include authTag in the output: Salted__ + salt + iv + authTag + encryptedData
@@ -67,25 +61,16 @@ public async encrypt(inputBuffer: Buffer, password: string): Promise<Buffer> {
   public async decrypt(encryptedBuffer: Buffer, password: string): Promise<Buffer> {
   this.ensureInitialized();
   try {
-    const saltLength = 8;
-    const ivLength = 16;
-    const keyLength = 32;
-    const iterations = 100000;
-    const algorithm = 'aes-256-gcm';
-    const digest = 'sha256';
-    const authTagLength = 16; // GCM authentication tag is 16 bytes
 
-    // Calculate positions in the buffer
-    const salt = encryptedBuffer.subarray(8, 8 + saltLength);
-    const iv = encryptedBuffer.subarray(8 + saltLength, 8 + saltLength + ivLength);
-    const authTag = encryptedBuffer.subarray(8 + saltLength + ivLength, 8 + saltLength + ivLength + authTagLength);
-    const encryptedData = encryptedBuffer.subarray(8 + saltLength + ivLength + authTagLength);
+    const salt = encryptedBuffer.subarray(8, 8 + this.cryptoConfig.saltLength);
+    const iv = encryptedBuffer.subarray(8 + this.cryptoConfig.saltLength, 8 + this.cryptoConfig.saltLength + this.cryptoConfig.ivLength);
+    const authTag = encryptedBuffer.subarray(8 + this.cryptoConfig.saltLength + this.cryptoConfig.ivLength, 8 + this.cryptoConfig.saltLength + this.cryptoConfig.ivLength + this.cryptoConfig.authTagLength);
+    const encryptedData = encryptedBuffer.subarray(8 + this.cryptoConfig.saltLength + this.cryptoConfig.ivLength + this.cryptoConfig.authTagLength);
 
-    const key = await pbkdf2Async(password, salt, iterations, keyLength, digest);
+    const key = await pbkdf2Async(password, salt, this.cryptoConfig.iterations, this.cryptoConfig.keyLength, this.cryptoConfig.digest);
 
-    const decipher = createDecipheriv(algorithm, key, iv);
+    const decipher = createDecipheriv(this.cryptoConfig.algorithm, key, iv);
     
-    // Set the authentication tag before decryption
     decipher.setAuthTag(authTag);
 
     const decryptedData = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
