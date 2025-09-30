@@ -34,7 +34,6 @@ export interface IValidationService extends IService {
 
 // Crypto service interface
 export interface ICryptoService extends IService {
-  hashPassword(password: string): string;
   encrypt(inputBuffer: Buffer, password: string): Promise<Buffer>;
   decrypt(encryptedBuffer: Buffer, password: string): Promise<Buffer>;
   decryptBackup(encryptedBuffer: Buffer, password: string): Promise<Buffer>;

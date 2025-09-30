@@ -72,7 +72,7 @@ export class ConfigService extends BaseService implements IConfigService {
         compressionLevel: 10,
         digest: 'sha256',
         saltLength: 8,
-        ivLength: 16,
+        ivLength: 12,
         keyLength: 32,
         iterations: 100000,
         authTagLength: 16,

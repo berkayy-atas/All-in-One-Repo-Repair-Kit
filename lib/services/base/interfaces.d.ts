@@ -18,7 +18,6 @@ export interface IValidationService extends IService {
     validateRestoreInputs(fileVersionId?: string, suspendActions?: boolean): void;
 }
 export interface ICryptoService extends IService {
-    hashPassword(password: string): string;
     encrypt(inputBuffer: Buffer, password: string): Promise<Buffer>;
     decrypt(encryptedBuffer: Buffer, password: string): Promise<Buffer>;
     decryptBackup(encryptedBuffer: Buffer, password: string): Promise<Buffer>;

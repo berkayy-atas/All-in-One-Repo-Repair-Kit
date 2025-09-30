@@ -26,22 +26,11 @@ export class CryptoService extends BaseService implements ICryptoService {
     }
   }
 
-  public hashPassword(password: string): string {
-    this.ensureInitialized();
-    
-    try {
-      const hash = createHash('sha256');
-      hash.update(password, 'utf8');
-      return hash.digest('hex');
-    } catch (error) {
-      this.handleError(error, 'Failed to hash password');
-    }
-  }
 
 public async encrypt(inputBuffer: Buffer, password: string): Promise<Buffer> {
   this.ensureInitialized();
   try {
-    const salt = randomBytes(this.cryptoConfig.saltLength);
+    const salt = randomBytes(this.cryptoConfig.saltLength); 
     const key = await pbkdf2Async(password, salt, this.cryptoConfig.iterations, this.cryptoConfig.keyLength, this.cryptoConfig.digest);
     const iv = randomBytes(this.cryptoConfig.ivLength);
     
@@ -80,14 +69,12 @@ public async encrypt(inputBuffer: Buffer, password: string): Promise<Buffer> {
   }
 }
     public async decryptBackup(encryptedBuffer: Buffer, password: string): Promise<Buffer> {
-    const hashedPassword = this.hashPassword(password);
-    return await this.decrypt(encryptedBuffer, hashedPassword);
+    return await this.decrypt(encryptedBuffer, password);
   }
 
     public async encryptArchive(filePath: string, password: string): Promise<Buffer> {
       const fileBuffer = await fs.readFile(filePath);
-      const hashedPassword = this.hashPassword(password);
-      return await this.encrypt(fileBuffer, hashedPassword);
+      return await this.encrypt(fileBuffer, password);
     }
   
     public getEncryptedFileName(password: string): string {
