@@ -4,16 +4,14 @@
   "description": "Enterprise-grade encrypted backups with compression and tamper-proof restoration for GitHub repositories",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
-    "build:prod": "npm run build && ncc build src/index.ts -o dist --minify --source-map",
+    "build": "ncc build src/index.ts -o dist --minify --source-map",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",
-    "dev": "tsc --watch",
-    "prepare": "npm run build:prod"
+    "dev": "tsc --watch"
   },
   "keywords": [
     "github-action",
