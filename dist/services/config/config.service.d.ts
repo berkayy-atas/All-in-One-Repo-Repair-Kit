@@ -1,6 +1,6 @@
-import { BaseService } from '../base/base-service';
-import { IConfigService, IValidationService, ILogger } from '../base/interfaces';
-import { ActionInputs, AppConfig } from '@/types/config';
+import { BaseService } from "../base/base-service";
+import { IConfigService, IValidationService, ILogger } from "../base/interfaces";
+import { ActionInputs, AppConfig } from "@/types/config";
 export declare class ConfigService extends BaseService implements IConfigService {
     private config;
     private validationService;
@@ -8,10 +8,10 @@ export declare class ConfigService extends BaseService implements IConfigService
     protected onInitialize(): Promise<void>;
     validateInputs(inputs: ActionInputs): Promise<void>;
     getConfig(): AppConfig;
-    getApiConfig(): AppConfig['api'];
-    getCryptoConfig(): AppConfig['crypto'];
-    getEnpointConfig(): AppConfig['endpoint'];
-    getFileConfig(): AppConfig['files'];
+    getApiConfig(): AppConfig["api"];
+    getCryptoConfig(): AppConfig["crypto"];
+    getEnpointConfig(): AppConfig["endpoint"];
+    getFileConfig(): AppConfig["files"];
     private buildConfig;
     private getInputsFromEnvironment;
 }

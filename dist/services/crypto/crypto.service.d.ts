@@ -1,6 +1,6 @@
-import { BaseService } from '../base/base-service';
-import { ICryptoService, ILogger } from '../base/interfaces';
-import { CryptoConfig } from '@/types/config';
+import { BaseService } from "../base/base-service";
+import { ICryptoService, ILogger } from "../base/interfaces";
+import { CryptoConfig } from "@/types/config";
 export declare class CryptoService extends BaseService implements ICryptoService {
     private cryptoConfig;
     constructor(logger: ILogger, cryptoConfig: CryptoConfig);
