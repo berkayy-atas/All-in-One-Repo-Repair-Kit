@@ -1,20 +1,23 @@
-import { promises as fs } from 'fs';
-import { context } from '@actions/github';
-import { BaseService } from '../base/base-service';
-import { 
-  IBackupWorkflowService, 
-  ILogger, 
-  IConfigService, 
-  ICryptoService, 
-  ICompressionService, 
-  IGitService, 
-  IApiClient 
-} from '../base/interfaces';
-import { BackupResult, CommitInfo } from '../../types/github';
-import { AuthTokenResponse, FileUploadData } from '@/types/api';
-import { DataMapper } from '../../utils/data.mapper';
+import { promises as fs } from "fs";
+import { context } from "@actions/github";
+import { BaseService } from "../base/base-service";
+import {
+  IBackupWorkflowService,
+  ILogger,
+  IConfigService,
+  ICryptoService,
+  ICompressionService,
+  IGitService,
+  IApiClient,
+} from "../base/interfaces";
+import { BackupResult, CommitInfo } from "../../types/github";
+import { AuthTokenResponse, FileUploadData } from "@/types/api";
+import { DataMapper } from "../../utils/data.mapper";
 
-export class BackupWorkflowService extends BaseService implements IBackupWorkflowService {
+export class BackupWorkflowService
+  extends BaseService
+  implements IBackupWorkflowService
+{
   private configService: IConfigService;
   private cryptoService: ICryptoService;
   private compressionService: ICompressionService;
@@ -50,50 +53,58 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
     this.ensureInitialized();
 
     try {
-      this.logger.info('Starting backup workflow');
+      this.logger.info("Starting backup workflow");
       const config = this.configService.getConfig();
       const startTime = Date.now();
 
       // Step 1: Create mirror clone
-      this.logger.info('Step 1: Creating repository mirror clone');
-      await this.gitService.createMirrorClone('.', config.files.sourceArchiveDir);
+      this.logger.info("Step 1: Creating repository mirror clone");
+      await this.gitService.createMirrorClone(
+        ".",
+        config.files.sourceArchiveDir
+      );
 
       // Step 2: Get commit information
-      this.logger.info('Step 2: Gathering commit information');
-      const commitInfo : CommitInfo = await this.gitService.getCurrentCommitInfo();
+      this.logger.info("Step 2: Gathering commit information");
+      const commitInfo: CommitInfo =
+        await this.gitService.getCurrentCommitInfo();
 
       // Step 3: Create tar archive
-      this.logger.info('Step 3: Creating tar archive');
+      this.logger.info("Step 3: Creating tar archive");
       const uncompressedSize = await this.compressionService.createTarArchive(
         config.files.sourceArchiveDir,
         config.files.tarArchiveFile
       );
 
       // Step 4: Compress with zstd
-      this.logger.info('Step 4: Compressing archive with zstd');
+      this.logger.info("Step 4: Compressing archive with zstd");
       const compressedSize = await this.compressionService.compressWithZstd(
         config.files.tarArchiveFile,
         config.files.compressedArchiveFile
       );
 
       // Step 5: Encrypt the compressed archive
-      this.logger.info('Step 5: Encrypting compressed archive');
+      this.logger.info("Step 5: Encrypting compressed archive");
       const encryptedBuffer = await this.cryptoService.encryptArchive(
-      config.files.compressedArchiveFile,
-      config.inputs.icredible_encryption_password
+        config.files.compressedArchiveFile,
+        config.inputs.icredible_encryption_password
       );
 
-      const encryptedFilePath = this.cryptoService.getEncryptedFileName(config.inputs.icredible_encryption_password);
+      const encryptedFilePath = this.cryptoService.getEncryptedFileName(
+        config.inputs.icredible_encryption_password
+      );
       await fs.writeFile(encryptedFilePath, encryptedBuffer);
       const encryptedSize = encryptedBuffer.length;
 
       // Step 6: Authenticate with API
-      this.logger.info('Step 6: Authenticating with iCredible API');
-      const authResponse : AuthTokenResponse = await this.apiClient.authenticate(config.inputs.icredible_activation_code);
+      this.logger.info("Step 6: Authenticating with iCredible API");
+      const authResponse: AuthTokenResponse = await this.apiClient.authenticate(
+        config.inputs.icredible_activation_code
+      );
 
       // Step 7: Upload backup
-      this.logger.info('Step 7: Uploading backup to iCredible');
-      const uploadData : FileUploadData = DataMapper.createUploadData(
+      this.logger.info("Step 7: Uploading backup to iCredible");
+      const uploadData: FileUploadData = DataMapper.createUploadData(
         encryptedBuffer,
         encryptedFilePath,
         uncompressedSize,
@@ -101,11 +112,11 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
         commitInfo,
         config
       );
-      this.logger.info(`${console.log(uploadData)}`);
-      this.logger.info(`${console.log(authResponse.token)}`);
 
-
-      const uploadResponse = await this.apiClient.uploadBackup(uploadData, authResponse.token);
+      const uploadResponse = await this.apiClient.uploadBackup(
+        uploadData,
+        authResponse.token
+      );
 
       // Step 8: Display summary
       this.displayBackupSummary({
@@ -119,11 +130,11 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
       // Clean up temporary files
       await this.cleanupTemporaryFiles(config);
 
-      this.logger.info('Backup workflow completed successfully');
+      this.logger.info("Backup workflow completed successfully");
 
       return {
         success: true,
-        message: 'Backup completed successfully',
+        message: "Backup completed successfully",
         recordId: uploadResponse.recordId,
         directoryRecordId: uploadResponse.directoryRecordId,
         fileSize: uncompressedSize,
@@ -132,9 +143,13 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
         commitInfo,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      this.logger.error('Backup workflow failed', error instanceof Error ? error : new Error(errorMessage));
-      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        "Backup workflow failed",
+        error instanceof Error ? error : new Error(errorMessage)
+      );
+
       // Attempt cleanup on error
       try {
         const config = this.configService.getConfig();
@@ -158,10 +173,9 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
     mgmtBaseUrl: string;
     endpointId: number;
   }): void {
-
-    let uploadMetadata = '';
+    let uploadMetadata = "";
     if (summary.commitInfo && summary.commitInfo.hash) {
-      const message = summary.commitInfo.message || '';
+      const message = summary.commitInfo.message || "";
       uploadMetadata = `
 --------------------------------------------------
 **Upload Metadata**
@@ -169,11 +183,10 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
 - CommitShort: ${summary.commitInfo.shortHash}
 - Author:      ${summary.commitInfo.author}
 - Date:        ${summary.commitInfo.date}
-- Committer:   ${summary.commitInfo.committer || 'GitHub'}
+- Committer:   ${summary.commitInfo.committer || "GitHub"}
 - Message:     ${message}
 `.trim();
     }
-    
 
     const summaryMessage = `
 '🛡️ iCredible Git Security - Backup Summary'
@@ -182,7 +195,7 @@ export class BackupWorkflowService extends BaseService implements IBackupWorkflo
 --------------------------------------------------
 **Git Metadata**
 Repository: ${process.env.GITHUB_REPOSITORY}
-- Owner: ${context.repo.owner} [${process.env.OWNER_TYPE || 'User'}]
+- Owner: ${context.repo.owner} [${process.env.OWNER_TYPE || "User"}]
 - Event: ${context.eventName}
 - Ref:   ${context.ref}
 - Actor: ${context.actor}
@@ -201,7 +214,9 @@ ${uploadMetadata}
       config.files.sourceArchiveDir,
       config.files.tarArchiveFile,
       config.files.compressedArchiveFile,
-      this.cryptoService.getEncryptedFileName(config.inputs.icredible_encryption_password),
+      this.cryptoService.getEncryptedFileName(
+        config.inputs.icredible_encryption_password
+      ),
     ];
 
     for (const file of filesToClean) {

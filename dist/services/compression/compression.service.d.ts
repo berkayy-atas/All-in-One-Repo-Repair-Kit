@@ -9,8 +9,6 @@ export declare class CompressionService extends BaseService implements ICompress
     compressWithZstd(inputPath: string, outputPath: string): Promise<number>;
     decompressZstd(inputPath: string, outputPath: string): Promise<void>;
     extractTarArchive(tarPath: string, extractDir: string): Promise<void>;
-    compressStreamWithZstd(inputPath: string, outputPath: string): Promise<number>;
     getDirectorySize(dirPath: string): Promise<number>;
-    compressWithZstdAlternative(inputPath: string, outputPath: string, compressionLevel?: number): Promise<number>;
 }
 //# sourceMappingURL=compression.service.d.ts.map

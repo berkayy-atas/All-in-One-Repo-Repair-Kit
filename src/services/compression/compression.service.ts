@@ -54,29 +54,12 @@ export class CompressionService
 
     try {
       this.logger.info("Installing zstd...");
-
-      // Try to install zstd using apt-get (for Ubuntu runners)
-      try {
-        await exec("sudo", ["apt-get", "update"], { silent: true });
-        await exec("sudo", ["apt-get", "install", "-y", "zstd"], {
-          silent: true,
-        });
-        this.logger.info("zstd installed successfully via apt-get");
-        this.zstdInstalled = true;
-        return;
-      } catch {
-        // If apt-get fails, try other methods
-      }
-
-      // Fallback: Try npm install (though this typically installs bindings, not CLI)
       try {
         await exec("npm", ["install", "-g", "zstd"], { silent: true });
         this.logger.info("zstd installed successfully via npm");
         this.zstdInstalled = true;
         return;
-      } catch {
-        // npm install failed
-      }
+      } catch {}
 
       // Final check if zstd is available
       const finalCheck = await exec("zstd", ["--version"], {
@@ -143,19 +126,12 @@ export class CompressionService
 
     try {
       this.logger.info(`Compressing ${inputPath} with zstd to ${outputPath}`);
-
-      // Ensure zstd is installed
       await this.ensureZstdInstalled();
 
-      // Get input file size for logging
       const inputStat = await fs.stat(inputPath);
       const inputSize = inputStat.size;
       this.logger.info(`Input file size: ${inputSize} bytes`);
 
-      // Use zstd CLI with streaming compression
-      // -10 is a good balance between compression ratio and speed
-      // -T0 uses all available CPU cores
-      // --long enables long distance matching for better compression
       const args = [
         "-10", // Compression level (1-19, default is 3)
         "-T0", // Use all CPU cores
@@ -166,11 +142,10 @@ export class CompressionService
         outputPath, // Output file
       ];
 
-      // If file is larger than 100MB, use more aggressive settings
-      if (inputSize > 100 * 1024 * 1024) {
-        this.logger.info("Large file detected, using optimized settings");
-        args[0] = "-12"; // Higher compression for large files
-      }
+      // if (inputSize > 100 * 1024 * 1024) {
+      //   this.logger.info("Large file detected, using optimized settings");
+      //   args[0] = "-12"; // Higher compression for large files
+      // }
 
       const exitCode = await exec("zstd", args);
 
@@ -178,7 +153,6 @@ export class CompressionService
         throw new Error(`zstd compression failed with exit code ${exitCode}`);
       }
 
-      // Get compressed file size
       const compressedStat = await fs.stat(outputPath);
       const compressedSize = compressedStat.size;
 
@@ -204,10 +178,8 @@ export class CompressionService
     try {
       this.logger.info(`Decompressing ${inputPath} with zstd to ${outputPath}`);
 
-      // Ensure zstd is installed
       await this.ensureZstdInstalled();
 
-      // Use zstd CLI for decompression
       const args = [
         "-d", // Decompress flag
         "-f", // Force overwrite
@@ -253,25 +225,6 @@ export class CompressionService
     }
   }
 
-  // Stream-based compression for large files
-  public async compressStreamWithZstd(
-    inputPath: string,
-    outputPath: string
-  ): Promise<number> {
-    this.ensureInitialized();
-
-    try {
-      this.logger.info(
-        `Stream compressing ${inputPath} with zstd to ${outputPath}`
-      );
-
-      // The main compressWithZstd method now uses streaming via CLI
-      return await this.compressWithZstd(inputPath, outputPath);
-    } catch (error) {
-      this.handleError(error, "Failed to stream compress with zstd");
-    }
-  }
-
   // Utility method to get directory size
   public async getDirectorySize(dirPath: string): Promise<number> {
     this.ensureInitialized();
@@ -298,42 +251,6 @@ export class CompressionService
     } catch (error) {
       this.logger.warn(`Could not get size for ${dirPath}: ${String(error)}`);
       return 0;
-    }
-  }
-
-  // Alternative compression method using streaming with pipes (if needed)
-  public async compressWithZstdAlternative(
-    inputPath: string,
-    outputPath: string,
-    compressionLevel: number = 10
-  ): Promise<number> {
-    this.ensureInitialized();
-
-    try {
-      this.logger.info(
-        `Alternative compression: ${inputPath} to ${outputPath}`
-      );
-
-      // Ensure zstd is installed
-      await this.ensureZstdInstalled();
-
-      // Use shell redirection for maximum memory efficiency
-      const command = `zstd -${compressionLevel} -T0 --long -c "${inputPath}" > "${outputPath}"`;
-
-      const exitCode = await exec("sh", ["-c", command]);
-
-      if (exitCode !== 0) {
-        throw new Error(
-          `Alternative zstd compression failed with exit code ${exitCode}`
-        );
-      }
-
-      const stat = await fs.stat(outputPath);
-      return stat.size;
-    } catch (error) {
-      // Fallback to regular method
-      this.logger.warn("Alternative compression failed, using regular method");
-      return await this.compressWithZstd(inputPath, outputPath);
     }
   }
 }
