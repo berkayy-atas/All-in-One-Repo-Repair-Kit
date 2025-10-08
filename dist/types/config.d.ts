@@ -1,4 +1,4 @@
-import { CipherGCMTypes } from "crypto";
+import { CipherGCMTypes } from 'crypto';
 export interface ActionInputs {
     icredible_activation_code: string;
     icredible_encryption_password: string;
@@ -16,14 +16,12 @@ export interface ApiConfig {
 }
 export interface CryptoConfig {
     algorithm: CipherGCMTypes;
-    compressionLevel: number;
     digest: string;
     saltLength: number;
     ivLength: number;
     keyLength: number;
     iterations: number;
     authTagLength: number;
-    keyDerivation: string;
 }
 export interface FileConfig {
     sourceArchiveDir: string;

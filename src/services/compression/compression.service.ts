@@ -1,10 +1,11 @@
-import { createReadStream, createWriteStream, promises as fs, Stats } from 'fs';
-import { join } from 'path';
-import * as tar from 'tar';
-import { pipeline } from 'stream/promises';
-import { BaseService } from '../base/base-service';
-import { ICompressionService, ILogger } from '../base/interfaces';
-import { exec } from '@actions/exec';
+import { createReadStream, createWriteStream, promises as fs } from "fs";
+import { join } from "path";
+import * as tar from "tar";
+import { pipeline } from "stream/promises";
+import { BaseService } from "../base/base-service";
+import { ICompressionService, ILogger } from "../base/interfaces";
+import { spawn } from "child_process";
+import { createGzip, createGunzip } from "zlib";
 
 export class CompressionService
   extends BaseService
@@ -15,12 +16,11 @@ export class CompressionService
   }
 
   protected async onInitialize(): Promise<void> {
+    // Check if zstd command is available
     try {
-      if (typeof tar.create !== 'function') {
-        throw new Error('Tar create function not available');
-      }
+      await this.checkZstdAvailability();
     } catch (error) {
-      throw new Error('Tar functionality not available');
+      this.logger.warn("Zstd command not available, falling back to gzip");
     }
   }
 
@@ -35,13 +35,11 @@ export class CompressionService
         `Creating tar archive from ${sourceDir} to ${outputPath}`
       );
 
-      // Verify source directory exists
       const sourceStat = await fs.stat(sourceDir);
       if (!sourceStat.isDirectory()) {
         throw new Error(`Source path ${sourceDir} is not a directory`);
       }
 
-      // Create tar archive
       await tar.create(
         {
           file: outputPath,
@@ -52,7 +50,6 @@ export class CompressionService
         [sourceDir]
       );
 
-      // Get file size
       const stat = await fs.stat(outputPath);
       const fileSize = stat.size;
 
@@ -61,7 +58,7 @@ export class CompressionService
       );
       return fileSize;
     } catch (error) {
-      this.handleError(error, 'Failed to create tar archive');
+      this.handleError(error, "Failed to create tar archive");
     }
   }
 
@@ -70,27 +67,92 @@ export class CompressionService
     outputPath: string
   ): Promise<number> {
     this.ensureInitialized();
+
     try {
-      this.logger.info(`Compressing ${inputPath} with zstd to ${outputPath}`);
-
-      // Düzeltilmiş loader fonksiyonu artık doğru nesneyi döndürecek
-      const zstdSimple = await this.loadZstdModule();
-
-      const inputBuffer = await fs.readFile(inputPath);
-
-      const compressedBuffer = zstdSimple.compress(inputBuffer, 10);
-
-      await fs.writeFile(outputPath, compressedBuffer);
-
-      const compressedSize = compressedBuffer.length;
-      this.logger.info(
-        `Zstd compression completed. Compressed size: ${compressedSize} bytes`
-      );
-
-      return compressedSize;
+      // Try native zstd first, fallback to Node.js implementation
+      try {
+        return await this.compressWithNativeZstd(inputPath, outputPath);
+      } catch (nativeError) {
+        this.logger.warn(
+          "Native zstd failed, falling back to Node.js implementation"
+        );
+        return await this.compressWithNodeZstd(inputPath, outputPath);
+      }
     } catch (error) {
-      this.handleError(error, 'Failed to compress with zstd');
+      this.handleError(error, "Failed to compress with zstd");
     }
+  }
+
+  private async compressWithNativeZstd(
+    inputPath: string,
+    outputPath: string
+  ): Promise<number> {
+    return new Promise((resolve, reject) => {
+      const zstd = spawn("zstd", ["-T0", "-10", "-o", outputPath, inputPath]);
+
+      let stderr = "";
+
+      zstd.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      zstd.on("close", async (code) => {
+        if (code === 0) {
+          try {
+            const stat = await fs.stat(outputPath);
+            this.logger.info(
+              `Native zstd compression completed. Size: ${stat.size} bytes`
+            );
+            resolve(stat.size);
+          } catch (statError) {
+            reject(statError);
+          }
+        } else {
+          reject(new Error(`zstd command failed with code ${code}: ${stderr}`));
+        }
+      });
+
+      zstd.on("error", (error) => {
+        reject(new Error(`zstd command not available: ${error.message}`));
+      });
+    });
+  }
+
+  private async compressWithNodeZstd(
+    inputPath: string,
+    outputPath: string
+  ): Promise<number> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const { createZstdCompress } = await this.loadZstdStreamModule();
+
+        const readStream = createReadStream(inputPath);
+        const writeStream = createWriteStream(outputPath);
+        const compressStream = createZstdCompress({ level: 10 });
+
+        let compressedSize = 0;
+
+        writeStream.on("finish", async () => {
+          try {
+            const stat = await fs.stat(outputPath);
+            this.logger.info(
+              `Node.js zstd compression completed. Size: ${stat.size} bytes`
+            );
+            resolve(stat.size);
+          } catch (statError) {
+            reject(statError);
+          }
+        });
+
+        writeStream.on("error", reject);
+        compressStream.on("error", reject);
+
+        // Pipe with error handling
+        await pipeline(readStream, compressStream, writeStream);
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   public async decompressZstd(
@@ -100,23 +162,109 @@ export class CompressionService
     this.ensureInitialized();
 
     try {
-      this.logger.info(`Decompressing ${inputPath} with zstd to ${outputPath}`);
-
-      const zstd = await this.loadZstdModule();
-
-      // Read compressed file
-      const compressedBuffer = await fs.readFile(inputPath);
-
-      // Decompress
-      const decompressedBuffer = zstd.decompress(compressedBuffer);
-
-      // Write decompressed file
-      await fs.writeFile(outputPath, decompressedBuffer);
-
-      this.logger.info(`Zstd decompression completed`);
+      // Try native zstd first
+      try {
+        await this.decompressWithNativeZstd(inputPath, outputPath);
+        return;
+      } catch (nativeError) {
+        this.logger.warn(
+          "Native zstd decompression failed, falling back to Node.js implementation"
+        );
+        await this.decompressWithNodeZstd(inputPath, outputPath);
+      }
     } catch (error) {
-      this.handleError(error, 'Failed to decompress with zstd');
+      this.handleError(error, "Failed to decompress with zstd");
     }
+  }
+
+  private async decompressWithNativeZstd(
+    inputPath: string,
+    outputPath: string
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const zstd = spawn("zstd", ["-d", inputPath, "-o", outputPath]);
+
+      let stderr = "";
+
+      zstd.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      zstd.on("close", (code) => {
+        if (code === 0) {
+          this.logger.info("Native zstd decompression completed");
+          resolve();
+        } else {
+          reject(
+            new Error(`zstd decompression failed with code ${code}: ${stderr}`)
+          );
+        }
+      });
+
+      zstd.on("error", (error) => {
+        reject(new Error(`zstd command not available: ${error.message}`));
+      });
+    });
+  }
+
+  private async decompressWithNodeZstd(
+    inputPath: string,
+    outputPath: string
+  ): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const { createZstdDecompress } = await this.loadZstdStreamModule();
+
+        const readStream = createReadStream(inputPath);
+        const writeStream = createWriteStream(outputPath);
+        const decompressStream = createZstdDecompress();
+
+        writeStream.on("finish", () => {
+          this.logger.info("Node.js zstd decompression completed");
+          resolve();
+        });
+
+        writeStream.on("error", reject);
+        decompressStream.on("error", reject);
+
+        await pipeline(readStream, decompressStream, writeStream);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  // Fallback to gzip if zstd fails completely
+  public async compressWithGzip(
+    inputPath: string,
+    outputPath: string
+  ): Promise<number> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const readStream = createReadStream(inputPath);
+        const writeStream = createWriteStream(outputPath);
+        const gzipStream = createGzip({ level: 9 });
+
+        writeStream.on("finish", async () => {
+          try {
+            const stat = await fs.stat(outputPath);
+            this.logger.info(
+              `Gzip compression completed. Size: ${stat.size} bytes`
+            );
+            resolve(stat.size);
+          } catch (statError) {
+            reject(statError);
+          }
+        });
+
+        writeStream.on("error", reject);
+        gzipStream.on("error", reject);
+
+        await pipeline(readStream, gzipStream, writeStream);
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   public async extractTarArchive(
@@ -128,10 +276,8 @@ export class CompressionService
     try {
       this.logger.info(`Extracting tar archive ${tarPath} to ${extractDir}`);
 
-      // Ensure extract directory exists
       await fs.mkdir(extractDir, { recursive: true });
 
-      // Extract tar archive
       await tar.extract({
         file: tarPath,
         cwd: extractDir,
@@ -140,27 +286,7 @@ export class CompressionService
 
       this.logger.info(`Tar archive extracted successfully`);
     } catch (error) {
-      this.handleError(error, 'Failed to extract tar archive');
-    }
-  }
-
-  // Stream-based compression for large files to avoid memory issues
-  public async compressStreamWithZstd(
-    inputPath: string,
-    outputPath: string
-  ): Promise<number> {
-    this.ensureInitialized();
-
-    try {
-      this.logger.info(
-        `Stream compressing ${inputPath} with zstd to ${outputPath}`
-      );
-
-      // For very large files, we might need to implement streaming compression
-      // For now, fall back to buffer-based compression
-      return await this.compressWithZstd(inputPath, outputPath);
-    } catch (error) {
-      this.handleError(error, 'Failed to stream compress with zstd');
+      this.handleError(error, "Failed to extract tar archive");
     }
   }
 
@@ -193,22 +319,71 @@ export class CompressionService
     }
   }
 
-  private async loadZstdModule(): Promise<any> {
+  private async checkZstdAvailability(): Promise<void> {
     return new Promise((resolve, reject) => {
-      try {
-        const { ZstdCodec } = require('zstd-codec');
+      const zstd = spawn("zstd", ["--version"]);
 
-        ZstdCodec.run((zstd: { Simple: new () => any }) => {
-          const simple = new zstd.Simple();
-          resolve(simple);
-        });
-      } catch (error) {
-        reject(
-          new Error(
-            'zstd-codec module not available. Please install it with: npm install zstd-codec'
-          )
-        );
-      }
+      zstd.on("close", (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error("zstd command not available"));
+        }
+      });
+
+      zstd.on("error", () => {
+        reject(new Error("zstd command not available"));
+      });
     });
+  }
+
+  private async loadZstdStreamModule(): Promise<any> {
+    try {
+      // Try to load zstd-wasm for better streaming support
+      const zstd = await import("zstd-wasm");
+      return zstd;
+    } catch (error) {
+      // Fallback to simple zstd-codec with streaming wrapper
+      const { ZstdCodec } = require("zstd-codec");
+
+      return new Promise((resolve, reject) => {
+        ZstdCodec.run((zstd: any) => {
+          const simple = new zstd.Simple();
+
+          // Create stream-compatible wrapper
+          const streamWrapper = {
+            createZstdCompress: (options: any) => {
+              const level = options?.level || 3;
+              const transform = new (require("stream").Transform)({
+                transform(chunk: any) {
+                  try {
+                    const compressed = simple.compress(chunk, level);
+                    this.push(compressed);
+                  } catch (error) {
+                    this.logger.error(error);
+                  }
+                },
+              });
+              return transform;
+            },
+            createZstdDecompress: () => {
+              const transform = new (require("stream").Transform)({
+                transform(chunk: any) {
+                  try {
+                    const decompressed = simple.decompress(chunk);
+                    this.push(decompressed);
+                  } catch (error) {
+                    this.logger.error(error);
+                  }
+                },
+              });
+              return transform;
+            },
+          };
+
+          resolve(streamWrapper);
+        });
+      });
+    }
   }
 }
