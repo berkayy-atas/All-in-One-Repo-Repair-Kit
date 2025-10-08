@@ -1,10 +1,10 @@
-import { BaseService } from "../base/base-service";
+import { BaseService } from '../base/base-service';
 import {
   IConfigService,
   IValidationService,
   ILogger,
-} from "../base/interfaces";
-import { ActionInputs, AppConfig } from "@/types/config";
+} from '../base/interfaces';
+import { ActionInputs, AppConfig } from '@/types/config';
 
 export class ConfigService extends BaseService implements IConfigService {
   private config: AppConfig | null = null;
@@ -29,7 +29,7 @@ export class ConfigService extends BaseService implements IConfigService {
     this.validationService.validateActionType(inputs.action);
     this.validationService.validateOtpMethod(inputs.otp_delivery_method);
 
-    if (inputs.action === "restore") {
+    if (inputs.action === 'restore') {
       this.validationService.validateRestoreInputs(
         inputs.file_version_id,
         inputs.suspend_actions
@@ -40,24 +40,24 @@ export class ConfigService extends BaseService implements IConfigService {
   public getConfig(): AppConfig {
     this.ensureInitialized();
     if (!this.config) {
-      throw new Error("Configuration not properly initialized");
+      throw new Error('Configuration not properly initialized');
     }
     return this.config;
   }
 
-  public getApiConfig(): AppConfig["api"] {
+  public getApiConfig(): AppConfig['api'] {
     return this.getConfig().api;
   }
 
-  public getCryptoConfig(): AppConfig["crypto"] {
+  public getCryptoConfig(): AppConfig['crypto'] {
     return this.getConfig().crypto;
   }
 
-  public getEnpointConfig(): AppConfig["endpoint"] {
+  public getEnpointConfig(): AppConfig['endpoint'] {
     return this.getConfig().endpoint;
   }
 
-  public getFileConfig(): AppConfig["files"] {
+  public getFileConfig(): AppConfig['files'] {
     return this.getConfig().files;
   }
 
@@ -67,16 +67,15 @@ export class ConfigService extends BaseService implements IConfigService {
     return {
       inputs,
       api: {
-        baseUrl: "https://dev.api.file-security.icredible.com",
-        managementBaseUrl: "https://dev.management.file-security.icredible.com",
+        baseUrl: 'https://staging.api.file-security.icredible.com',
+        managementBaseUrl:
+          'https://staging.management.file-security.icredible.com',
         timeout: 30000,
-        userAgent: "iCredible-Git-Security/2.0",
+        userAgent: 'iCredible-Git-Security/2.0',
       },
       crypto: {
-        algorithm: "aes-256-gcm",
-        keyDerivation: "pbkdf2",
-        compressionLevel: 10,
-        digest: "sha256",
+        algorithm: 'aes-256-gcm',
+        digest: 'sha256',
         saltLength: 32,
         ivLength: 12,
         keyLength: 32,
@@ -84,29 +83,29 @@ export class ConfigService extends BaseService implements IConfigService {
         authTagLength: 16,
       },
       files: {
-        sourceArchiveDir: "repo-mirror",
-        tarArchiveFile: "repo-mirror.tar",
-        compressedArchiveFile: "repo-mirror.tar.zst",
-        encryptedArchiveFile: "repo-mirror.tar.zst.enc",
+        sourceArchiveDir: 'repo-mirror',
+        tarArchiveFile: 'repo-mirror.tar',
+        compressedArchiveFile: 'repo-mirror.tar.zst',
+        encryptedArchiveFile: 'repo-mirror.tar.zst.enc',
       },
       endpoint: {
-        endpointType: "PC",
+        endpointType: 'PC',
       },
       git: {
-        userName: "iCredible Git Security",
-        userEmail: "icredible-git-sec@icredible.com",
+        userName: 'iCredible Git Security',
+        userEmail: 'icredible-git-sec@icredible.com',
       },
       otp: {
-        sourceType: "FileDownload",
-        generationMode: "Number",
-        endpointType: "Workstation",
-        verificationKey: "1",
+        sourceType: 'FileDownload',
+        generationMode: 'Number',
+        endpointType: 'Workstation',
+        verificationKey: '1',
       },
       upload: {
         attributes: 32,
-        compressionEngine: "None",
-        compressionLevel: "NoCompression",
-        encryptionType: "None",
+        compressionEngine: 'None',
+        compressionLevel: 'NoCompression',
+        encryptionType: 'None',
         revisionType: 1,
       },
     };
@@ -114,7 +113,7 @@ export class ConfigService extends BaseService implements IConfigService {
 
   private getInputsFromEnvironment(): ActionInputs {
     const getInput = (name: string, required = true): string => {
-      const value = process.env[`INPUT_${name.toUpperCase()}`] || "";
+      const value = process.env[`INPUT_${name.toUpperCase()}`] || '';
       if (required && !value) {
         throw new Error(`Required input '${name}' is missing`);
       }
@@ -123,24 +122,24 @@ export class ConfigService extends BaseService implements IConfigService {
 
     const getBooleanInput = (name: string, defaultValue = false): boolean => {
       const value = getInput(name, false).toLowerCase();
-      if (value === "true") return true;
-      if (value === "false") return false;
+      if (value === 'true') return true;
+      if (value === 'false') return false;
       return defaultValue;
     };
 
     return {
-      icredible_activation_code: getInput("icredible_activation_code"),
-      icredible_encryption_password: getInput("icredible_encryption_password"),
-      action: (getInput("action", false) as "backup" | "restore") || "backup",
-      file_version_id: getInput("file_version_id", false),
+      icredible_activation_code: getInput('icredible_activation_code'),
+      icredible_encryption_password: getInput('icredible_encryption_password'),
+      action: (getInput('action', false) as 'backup' | 'restore') || 'backup',
+      file_version_id: getInput('file_version_id', false),
       icredible_repository_restore_token: getInput(
-        "icredible_repository_restore_token",
+        'icredible_repository_restore_token',
         false
       ),
-      suspend_actions: getBooleanInput("suspend_actions", true),
+      suspend_actions: getBooleanInput('suspend_actions', true),
       otp_delivery_method:
-        (getInput("otp_delivery_method", false) as "MAIL" | "AUTHENTICATOR") ||
-        "MAIL",
+        (getInput('otp_delivery_method', false) as 'MAIL' | 'AUTHENTICATOR') ||
+        'MAIL',
     };
   }
 }

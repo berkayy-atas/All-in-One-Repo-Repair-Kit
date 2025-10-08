@@ -219,7 +219,7 @@ ${summary.actionsWereSuspended ? '- ✅ GitHub Actions were safely suspended and
 
 **Security:**
 - ✅ Multi-factor authentication (OTP) verified
-- ✅ AES-256-CBC decryption applied
+- ✅ AES-256-GCM decryption applied
 - ✅ Repository integrity maintained
 
 Your repository has been successfully restored from the encrypted backup.
