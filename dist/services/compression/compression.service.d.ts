@@ -1,19 +1,16 @@
 import { BaseService } from "../base/base-service";
 import { ICompressionService, ILogger } from "../base/interfaces";
 export declare class CompressionService extends BaseService implements ICompressionService {
+    private zstdInstalled;
     constructor(logger: ILogger);
     protected onInitialize(): Promise<void>;
+    private ensureZstdInstalled;
     createTarArchive(sourceDir: string, outputPath: string): Promise<number>;
     compressWithZstd(inputPath: string, outputPath: string): Promise<number>;
-    private compressWithNativeZstd;
-    private compressWithNodeZstd;
     decompressZstd(inputPath: string, outputPath: string): Promise<void>;
-    private decompressWithNativeZstd;
-    private decompressWithNodeZstd;
-    compressWithGzip(inputPath: string, outputPath: string): Promise<number>;
     extractTarArchive(tarPath: string, extractDir: string): Promise<void>;
+    compressStreamWithZstd(inputPath: string, outputPath: string): Promise<number>;
     getDirectorySize(dirPath: string): Promise<number>;
-    private checkZstdAvailability;
-    private loadZstdStreamModule;
+    compressWithZstdAlternative(inputPath: string, outputPath: string, compressionLevel?: number): Promise<number>;
 }
 //# sourceMappingURL=compression.service.d.ts.map
