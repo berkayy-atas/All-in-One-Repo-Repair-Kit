@@ -69,7 +69,7 @@ export class ConfigService extends BaseService implements IConfigService {
       api: {
         baseUrl: "https://dev.api.file-security.icredible.com",
         managementBaseUrl: "https://dev.management.file-security.icredible.com",
-        timeout: 30000,
+        timeout: 300000, //5 min
         userAgent: "iCredible-Git-Security/2.0",
       },
       crypto: {
