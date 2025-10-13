@@ -1,13 +1,14 @@
-import { CipherGCMTypes } from 'crypto';
+import { CipherGCMTypes } from "crypto";
 
 export interface ActionInputs {
   icredible_activation_code: string;
   icredible_encryption_password: string;
-  action: 'backup' | 'restore';
+  action: "backup" | "restore";
+  endpoint_preference: "SINGLE" | "MULTIPLE";
   file_version_id?: string;
   icredible_repository_restore_token?: string;
   suspend_actions: boolean;
-  otp_delivery_method: 'MAIL' | 'AUTHENTICATOR';
+  otp_delivery_method: "MAIL" | "AUTHENTICATOR";
 }
 
 export interface ApiConfig {

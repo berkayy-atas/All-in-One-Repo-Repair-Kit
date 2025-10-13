@@ -1,19 +1,20 @@
-import { ActionInputs, AppConfig } from '@/types/config';
-import { BackupResult, RestoreResult, CommitInfo } from '@/types/github';
-import { AuthTokenResponse, BackupUploadResponse, OtpResponse, OtpStatusResponse, FileUploadData, RepositoryActivationDetails } from '@/types/api';
+import { ActionInputs, AppConfig } from "@/types/config";
+import { BackupResult, RestoreResult, CommitInfo } from "@/types/github";
+import { AuthTokenResponse, BackupUploadResponse, OtpResponse, OtpStatusResponse, FileUploadData, RepositoryActivationDetails } from "@/types/api";
 export interface IService {
     initialize(): Promise<void>;
 }
 export interface IConfigService extends IService {
     validateInputs(inputs: ActionInputs): Promise<void>;
     getConfig(): AppConfig;
-    getApiConfig(): AppConfig['api'];
-    getCryptoConfig(): AppConfig['crypto'];
-    getFileConfig(): AppConfig['files'];
+    getApiConfig(): AppConfig["api"];
+    getCryptoConfig(): AppConfig["crypto"];
+    getFileConfig(): AppConfig["files"];
 }
 export interface IValidationService extends IService {
     validatePassword(password: string): void;
     validateActionType(action: string): void;
+    validateEnpointPreference(endpointPreferencen: string): void;
     validateOtpMethod(method: string): void;
     validateRestoreInputs(fileVersionId?: string, suspendActions?: boolean): void;
 }
@@ -44,13 +45,13 @@ export interface IGitService extends IService {
 export interface IApiClient extends IService {
     authenticate(activationCode: string): Promise<AuthTokenResponse>;
     uploadBackup(uploadData: FileUploadData, token: string): Promise<BackupUploadResponse>;
-    requestOtp(deliveryMethod: 'MAIL' | 'AUTHENTICATOR', token: string): Promise<OtpResponse>;
+    requestOtp(deliveryMethod: "MAIL" | "AUTHENTICATOR", token: string): Promise<OtpResponse>;
     verifyOtp(uniqueKey: string, token: string): Promise<OtpStatusResponse>;
     downloadBackup(fileVersionId: string, token: string, uniqueKey: string): Promise<Buffer>;
 }
 export interface IOtpService extends IService {
     setAuthToken(token: string): void;
-    requestOtp(deliveryMethod: 'MAIL' | 'AUTHENTICATOR'): Promise<OtpResponse>;
+    requestOtp(deliveryMethod: "MAIL" | "AUTHENTICATOR"): Promise<OtpResponse>;
     waitForOtpVerification(uniqueKey: string, expiresAt: string): Promise<boolean>;
     getVerificationUrl(otpResponse: OtpResponse): string;
 }

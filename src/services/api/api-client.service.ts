@@ -1,8 +1,8 @@
-import FormData from "form-data";
-import { BaseService } from "../base/base-service";
-import { GitHubService } from "../github/github.service";
-import { IApiClient, ILogger } from "../base/interfaces";
-import * as core from "@actions/core";
+import FormData from 'form-data';
+import { BaseService } from '../base/base-service';
+import { GitHubService } from '../github/github.service';
+import { IApiClient, ILogger } from '../base/interfaces';
+import * as core from '@actions/core';
 
 import {
   AuthTokenResponse,
@@ -12,11 +12,11 @@ import {
   FileUploadData,
   ApiResponse,
   AuthTokenRequest,
-} from "../../types/api";
-import axios, { AxiosInstance } from "axios";
-import { context } from "@actions/github";
-import { ConfigService } from "../config/config.service";
-import { ApiConfig } from "../../types/config";
+} from '../../types/api';
+import axios, { AxiosInstance } from 'axios';
+import { context } from '@actions/github';
+import { ConfigService } from '../config/config.service';
+import { ApiConfig } from '../../types/config';
 
 export class ApiClientService extends BaseService implements IApiClient {
   private configService: ConfigService;
@@ -32,14 +32,14 @@ export class ApiClientService extends BaseService implements IApiClient {
       baseURL: this.apiConfig.baseUrl,
       timeout: this.apiConfig.timeout,
       headers: {
-        "User-Agent": this.apiConfig.userAgent,
+        'User-Agent': this.apiConfig.userAgent,
       },
     });
 
     this.axiosInstance.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        this.handleAxiosError(error, "API request failed");
+      response => response,
+      error => {
+        this.handleAxiosError(error, 'API request failed');
       }
     );
   }
@@ -52,9 +52,9 @@ export class ApiClientService extends BaseService implements IApiClient {
     this.ensureInitialized();
 
     try {
-      this.logger.info("Authenticating with iCredible API");
+      this.logger.info('Authenticating with iCredible API');
 
-      const defaultToken = core.getInput("github-token", { required: true });
+      const defaultToken = core.getInput('github-token', { required: true });
       const defaultTokenGitHubService = new GitHubService(
         this.logger,
         defaultToken,
@@ -73,7 +73,7 @@ export class ApiClientService extends BaseService implements IApiClient {
       };
 
       const response = await this.axiosInstance.post(
-        "/endpoint/activation",
+        '/endpoint/activation',
         requestBody
       );
 
@@ -84,10 +84,10 @@ export class ApiClientService extends BaseService implements IApiClient {
         );
       }
 
-      this.logger.info("Authentication successful");
+      this.logger.info('Authentication successful');
       return apiResponse.data;
     } catch (error) {
-      this.handleError(error, "Failed to authenticate with iCredible API");
+      this.handleError(error, 'Failed to authenticate with iCredible API');
     }
   }
 
@@ -103,46 +103,46 @@ export class ApiClientService extends BaseService implements IApiClient {
 
       const form = new FormData();
 
-      form.append("file", uploadData.file, {
+      form.append('file', uploadData.file, {
         filename: uploadData.fileName,
-        contentType: "application/octet-stream",
+        contentType: 'application/octet-stream',
       });
 
-      form.append("Size", uploadData.size.toString());
+      form.append('Size', uploadData.size.toString());
       form.append(
-        "CompressedFileSize",
+        'CompressedFileSize',
         uploadData.compressedFileSize.toString()
       );
-      form.append("Attributes", uploadData.attributes.toString());
-      form.append("FileName", uploadData.fileName);
-      form.append("CompressionEngine", uploadData.compressionEngine);
-      form.append("CompressionLevel", uploadData.compressionLevel);
-      form.append("FullPath", uploadData.fullPath);
-      form.append("EncryptionType", uploadData.encryptionType);
-      form.append("RevisionType", uploadData.revisionType.toString());
+      form.append('Attributes', uploadData.attributes.toString());
+      form.append('FileName', uploadData.fileName);
+      form.append('CompressionEngine', uploadData.compressionEngine);
+      form.append('CompressionLevel', uploadData.compressionLevel);
+      form.append('FullPath', uploadData.fullPath);
+      form.append('EncryptionType', uploadData.encryptionType);
+      form.append('RevisionType', uploadData.revisionType.toString());
 
-      form.append("MetaData[Event]", uploadData.metadata.event);
-      form.append("MetaData[Ref]", uploadData.metadata.ref);
-      form.append("MetaData[Actor]", uploadData.metadata.actor);
-      form.append("MetaData[Owner]", uploadData.metadata.owner);
-      form.append("MetaData[OwnerType]", uploadData.metadata.ownerType);
+      form.append('MetaData[Event]', uploadData.metadata.event);
+      form.append('MetaData[Ref]', uploadData.metadata.ref);
+      form.append('MetaData[Actor]', uploadData.metadata.actor);
+      form.append('MetaData[Owner]', uploadData.metadata.owner);
+      form.append('MetaData[OwnerType]', uploadData.metadata.ownerType);
 
       if (uploadData.metadata.commit) {
-        form.append("MetaData[Commit]", uploadData.metadata.commit);
-        form.append("MetaData[CommitShort]", uploadData.metadata.commitShort);
-        form.append("MetaData[Author]", uploadData.metadata.author);
-        form.append("MetaData[Date]", uploadData.metadata.date);
-        form.append("MetaData[Committer]", uploadData.metadata.committer);
-        form.append("MetaData[Message]", uploadData.metadata.message);
+        form.append('MetaData[Commit]', uploadData.metadata.commit);
+        form.append('MetaData[CommitShort]', uploadData.metadata.commitShort);
+        form.append('MetaData[Author]', uploadData.metadata.author);
+        form.append('MetaData[Date]', uploadData.metadata.date);
+        form.append('MetaData[Committer]', uploadData.metadata.committer);
+        form.append('MetaData[Message]', uploadData.metadata.message);
       }
 
       const headers = {
         Authorization: `Bearer ${token}`,
-        "User-Agent": "iCredible-Git-Security/2.0",
+        'User-Agent': 'iCredible-Git-Security/2.0',
         ...form.getHeaders(),
       };
 
-      const response = await this.axiosInstance.post("/backup/shield", form, {
+      const response = await this.axiosInstance.post('/backup/shield', form, {
         headers: headers,
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
@@ -159,7 +159,7 @@ export class ApiClientService extends BaseService implements IApiClient {
 
             if (percentCompleted === 100) {
               this.logger.info(
-                "Upload completed, waiting for server response..."
+                'Upload completed, waiting for server response...'
               );
             }
           }
@@ -174,7 +174,7 @@ export class ApiClientService extends BaseService implements IApiClient {
         );
       }
 
-      this.logger.info("Backup uploaded successfully");
+      this.logger.info('Backup uploaded successfully');
       return apiResponse.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -183,16 +183,16 @@ export class ApiClientService extends BaseService implements IApiClient {
           new Error(
             `Upload failed: HTTP ${error.response.status} - ${serverError}`
           ),
-          "Failed to upload backup"
+          'Failed to upload backup'
         );
       } else {
-        this.handleError(error, "Failed to upload backup");
+        this.handleError(error, 'Failed to upload backup');
       }
     }
   }
 
   public async requestOtp(
-    deliveryMethod: "MAIL" | "AUTHENTICATOR",
+    deliveryMethod: 'MAIL' | 'AUTHENTICATOR',
     token: string
   ): Promise<OtpResponse> {
     this.ensureInitialized();
@@ -201,11 +201,11 @@ export class ApiClientService extends BaseService implements IApiClient {
 
       const requestBody = {
         Type: deliveryMethod,
-        Source: "FileDownload",
-        OtpGenerationMode: "Number",
+        Source: 'FileDownload',
+        OtpGenerationMode: 'Number',
       };
 
-      const response = await this.axiosInstance.post("/OTP/Send", requestBody, {
+      const response = await this.axiosInstance.post('/OTP/Send', requestBody, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -218,10 +218,10 @@ export class ApiClientService extends BaseService implements IApiClient {
         );
       }
 
-      this.logger.info("OTP requested successfully");
+      this.logger.info('OTP requested successfully');
       return apiResponse.data;
     } catch (error) {
-      this.handleAxiosError(error, "Failed to request OTP");
+      this.handleAxiosError(error, 'Failed to request OTP');
     }
   }
 
@@ -234,7 +234,7 @@ export class ApiClientService extends BaseService implements IApiClient {
       const requestBody = { uniqueKey: uniqueKey };
 
       const response = await this.axiosInstance.post(
-        "/OTP/GetOTPStatus",
+        '/OTP/GetOTPStatus',
         requestBody,
         {
           headers: {
@@ -265,10 +265,10 @@ export class ApiClientService extends BaseService implements IApiClient {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "X-Unique-Key": uniqueKey,
-            "X-Verification-Key": "1",
+            'X-Unique-Key': uniqueKey,
+            'X-Verification-Key': '1',
           },
-          responseType: "arraybuffer",
+          responseType: 'arraybuffer',
         }
       );
 
@@ -278,7 +278,7 @@ export class ApiClientService extends BaseService implements IApiClient {
       );
       return buffer;
     } catch (error) {
-      this.handleAxiosError(error, "Failed to download backup");
+      this.handleAxiosError(error, 'Failed to download backup');
     }
   }
 

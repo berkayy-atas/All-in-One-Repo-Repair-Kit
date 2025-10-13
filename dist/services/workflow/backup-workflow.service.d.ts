@@ -1,6 +1,6 @@
-import { BaseService } from "../base/base-service";
-import { IBackupWorkflowService, ILogger, IConfigService, ICryptoService, ICompressionService, IGitService, IApiClient } from "../base/interfaces";
-import { BackupResult } from "../../types/github";
+import { BaseService } from '../base/base-service';
+import { IBackupWorkflowService, ILogger, IConfigService, ICryptoService, ICompressionService, IGitService, IApiClient } from '../base/interfaces';
+import { BackupResult } from '../../types/github';
 export declare class BackupWorkflowService extends BaseService implements IBackupWorkflowService {
     private configService;
     private cryptoService;

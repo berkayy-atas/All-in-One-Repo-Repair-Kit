@@ -27,6 +27,10 @@ export class ConfigService extends BaseService implements IConfigService {
       inputs.icredible_encryption_password
     );
     this.validationService.validateActionType(inputs.action);
+    this.validationService.validateEnpointPreference(
+      inputs.endpoint_preference
+    );
+
     this.validationService.validateOtpMethod(inputs.otp_delivery_method);
 
     if (inputs.action === "restore") {
@@ -67,10 +71,11 @@ export class ConfigService extends BaseService implements IConfigService {
     return {
       inputs,
       api: {
-        baseUrl: "https://dev.api.file-security.icredible.com",
-        managementBaseUrl: "https://dev.management.file-security.icredible.com",
-        timeout: 300000, //5 min
-        userAgent: "iCredible-Git-Security/2.0",
+        baseUrl: "https://staging.api.file-security.icredible.com",
+        managementBaseUrl:
+          "https://staging.management.file-security.icredible.com",
+        timeout: 60000, //60 second
+        userAgent: "iCredible-Git-Security",
       },
       crypto: {
         algorithm: "aes-256-gcm",
@@ -130,6 +135,9 @@ export class ConfigService extends BaseService implements IConfigService {
       icredible_activation_code: getInput("icredible_activation_code"),
       icredible_encryption_password: getInput("icredible_encryption_password"),
       action: (getInput("action", false) as "backup" | "restore") || "backup",
+      endpoint_preference:
+        (getInput("endpoint_preference", false) as "SINGLE" | "MULTIPLE") ||
+        "SINGLE",
       file_version_id: getInput("file_version_id", false),
       icredible_repository_restore_token: getInput(
         "icredible_repository_restore_token",

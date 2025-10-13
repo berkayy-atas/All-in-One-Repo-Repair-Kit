@@ -1,57 +1,61 @@
-name: 'asdad Security'
-author: 'asdassadds'
-description: 'asddsaasd Git Security: Enterprise-grade encrypted backups with compression and tamper-proof restoration.'
+name: "asdad Security"
+author: "asdassadds"
+description: "asddsaasd Git Security: Enterprise-grade encrypted backups with compression and tamper-proof restoration."
 branding:
-  icon: 'shield'
-  color: 'red'
+  icon: "shield"
+  color: "red"
 
 inputs:
   icredible_activation_code:
-    description: 'Your unique activation code for the iCredible service. This is required to authenticate and authorize the action to perform backup and restore operations.'
+    description: "Your unique activation code for the iCredible service. This is required to authenticate and authorize the action to perform backup and restore operations."
     required: true
   icredible_encryption_password:
-    description: 'The secret password used to encrypt the repository backup and decrypt it during restore. Must be at least 8 characters long and include: uppercase letter, lowercase letter, digit, and special character.'
+    description: "The secret password used to encrypt the repository backup and decrypt it during restore. Must be at least 8 characters long and include: uppercase letter, lowercase letter, digit, and special character."
     required: true
   action:
-    description: 'Select operation type (backup or restore)'
+    description: "Select operation type (backup or restore)"
     required: false
-    default: 'backup'
-  github-token:  
-    description: 'Kimlik doğrulama için kullanilacak GITHUB_TOKEN.'
-    required: true 
+    default: "backup"
+  github-token:
+    description: "Kimlik doğrulama için kullanilacak GITHUB_TOKEN."
+    required: true
+  endpoint-preference:
+    description: "Select the operation type [SINGLE (a separate endpoint for each repo) or MULTIPLE (all repos on the same endpoint)]"
+    required: false
+    default: "SINGLE"
   file_version_id:
-    description: 'The unique identifier of the backup version you wish to restore. Providing a value for this input triggers the restore workflow. Leave this empty to perform a backup.'
+    description: "The unique identifier of the backup version you wish to restore. Providing a value for this input triggers the restore workflow. Leave this empty to perform a backup."
     required: false
-    default: ''
+    default: ""
   icredible_repository_restore_token:
     description: "A GitHub Personal Access Token (PAT) with 'repo' and 'workflow' scopes. This is required only for the restore operation to push the restored repository and its history."
     required: false
-    default: ''
+    default: ""
   suspend_actions:
-    description: 'If true, temporarily disables all repository workflows to ensure a safe and uninterrupted restore operation. This prevents other automations from interfering.'
+    description: "If true, temporarily disables all repository workflows to ensure a safe and uninterrupted restore operation. This prevents other automations from interfering."
     required: false
-    default: 'true'
+    default: "true"
   otp_delivery_method:
     description: "Specifies the delivery method for the OTP required to authorize a restore operation. Valid options are 'MAIL' or 'AUTHENTICATOR'."
     required: false
-    default: 'MAIL'
+    default: "MAIL"
 
 outputs:
   record_id:
-    description: 'The unique record ID of the backup (backup operation only)'
+    description: "The unique record ID of the backup (backup operation only)"
   directory_record_id:
-    description: 'The directory record ID of the backup (backup operation only)'
+    description: "The directory record ID of the backup (backup operation only)"
   file_size:
-    description: 'Original file size in bytes (backup operation only)'
+    description: "Original file size in bytes (backup operation only)"
   compressed_size:
-    description: 'Compressed file size in bytes (backup operation only)'
+    description: "Compressed file size in bytes (backup operation only)"
   encrypted_size:
-    description: 'Encrypted file size in bytes (backup operation only)'
+    description: "Encrypted file size in bytes (backup operation only)"
   file_version_id:
-    description: 'The file version ID that was restored (restore operation only)'
+    description: "The file version ID that was restored (restore operation only)"
   workflows_suspended:
-    description: 'Whether GitHub Actions were suspended during restore (restore operation only)'
+    description: "Whether GitHub Actions were suspended during restore (restore operation only)"
 
 runs:
-  using: 'node20'
-  main: 'dist/index.js'
+  using: "node20"
+  main: "dist/index.js"

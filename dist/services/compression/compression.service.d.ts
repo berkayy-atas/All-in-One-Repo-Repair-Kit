@@ -1,5 +1,5 @@
-import { BaseService } from "../base/base-service";
-import { ICompressionService, ILogger } from "../base/interfaces";
+import { BaseService } from '../base/base-service';
+import { ICompressionService, ILogger } from '../base/interfaces';
 export declare class CompressionService extends BaseService implements ICompressionService {
     private zstdInstalled;
     constructor(logger: ILogger);

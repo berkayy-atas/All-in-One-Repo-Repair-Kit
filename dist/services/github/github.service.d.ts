@@ -1,7 +1,7 @@
-import { BaseService } from '../base/base-service';
-import { IConfigService, IGitHubService, ILogger } from '../base/interfaces';
-import { GitHubActionsPermissions } from '@/types/github';
-import { RepositoryActivationDetails } from '@/types/api';
+import { BaseService } from "../base/base-service";
+import { IConfigService, IGitHubService, ILogger } from "../base/interfaces";
+import { GitHubActionsPermissions } from "@/types/github";
+import { RepositoryActivationDetails } from "@/types/api";
 export declare class GitHubService extends BaseService implements IGitHubService {
     private octokit;
     private owner;

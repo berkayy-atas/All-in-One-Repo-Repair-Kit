@@ -1,9 +1,9 @@
-import { promises as fs } from "fs";
-import { join } from "path";
-import * as tar from "tar";
-import { BaseService } from "../base/base-service";
-import { ICompressionService, ILogger } from "../base/interfaces";
-import { exec } from "@actions/exec";
+import { promises as fs } from 'fs';
+import { join } from 'path';
+import * as tar from 'tar';
+import { BaseService } from '../base/base-service';
+import { ICompressionService, ILogger } from '../base/interfaces';
+import { exec } from '@actions/exec';
 
 export class CompressionService
   extends BaseService
@@ -18,19 +18,19 @@ export class CompressionService
   protected async onInitialize(): Promise<void> {
     try {
       // Check if tar is available
-      if (typeof tar.create !== "function") {
-        throw new Error("Tar create function not available");
+      if (typeof tar.create !== 'function') {
+        throw new Error('Tar create function not available');
       }
 
       // Install zstd if not already installed
       await this.ensureZstdInstalled();
     } catch (error) {
       throw new Error(
-        "Failed to initialize compression service: " + String(error)
+        'Failed to initialize compression service: ' + String(error)
       );
     }
   }
-
+  // TODO: Add the zstd tool to the build without requiring an additional download within the action
   private async ensureZstdInstalled(): Promise<void> {
     if (this.zstdInstalled) {
       return;
@@ -38,13 +38,13 @@ export class CompressionService
 
     try {
       // Check if zstd is already available
-      const checkResult = await exec("zstd", ["--version"], {
+      const checkResult = await exec('zstd', ['--version'], {
         ignoreReturnCode: true,
         silent: true,
       });
 
       if (checkResult === 0) {
-        this.logger.info("zstd is already available in the system");
+        this.logger.info('zstd is already available in the system');
         this.zstdInstalled = true;
         return;
       }
@@ -53,27 +53,27 @@ export class CompressionService
     }
 
     try {
-      this.logger.info("Installing zstd...");
+      this.logger.info('Installing zstd...');
       try {
-        await exec("npm", ["install", "-g", "zstd"], { silent: true });
-        this.logger.info("zstd installed successfully via npm");
+        await exec('npm', ['install', '-g', 'zstd'], { silent: true });
+        this.logger.info('zstd installed successfully via npm');
         this.zstdInstalled = true;
         return;
       } catch {}
 
       // Final check if zstd is available
-      const finalCheck = await exec("zstd", ["--version"], {
+      const finalCheck = await exec('zstd', ['--version'], {
         ignoreReturnCode: true,
         silent: true,
       });
 
       if (finalCheck !== 0) {
-        throw new Error("Failed to install zstd");
+        throw new Error('Failed to install zstd');
       }
 
       this.zstdInstalled = true;
     } catch (error) {
-      throw new Error("Failed to ensure zstd installation: " + String(error));
+      throw new Error('Failed to ensure zstd installation: ' + String(error));
     }
   }
 
@@ -114,7 +114,7 @@ export class CompressionService
       );
       return fileSize;
     } catch (error) {
-      this.handleError(error, "Failed to create tar archive");
+      this.handleError(error, 'Failed to create tar archive');
     }
   }
 
@@ -133,12 +133,12 @@ export class CompressionService
       this.logger.info(`Input file size: ${inputSize} bytes`);
 
       const args = [
-        "-10", // Compression level (1-19, default is 3)
-        "-T0", // Use all CPU cores
-        "--long", // Enable long distance matching
-        "-f", // Force overwrite output
+        '-10', // Compression level (1-19, default is 3)
+        '-T0', // Use all CPU cores
+        '--long', // Enable long distance matching
+        '-f', // Force overwrite output
         inputPath, // Input file
-        "-o", // Output flag
+        '-o', // Output flag
         outputPath, // Output file
       ];
 
@@ -147,7 +147,7 @@ export class CompressionService
       //   args[0] = "-12"; // Higher compression for large files
       // }
 
-      const exitCode = await exec("zstd", args);
+      const exitCode = await exec('zstd', args);
 
       if (exitCode !== 0) {
         throw new Error(`zstd compression failed with exit code ${exitCode}`);
@@ -165,7 +165,7 @@ export class CompressionService
 
       return compressedSize;
     } catch (error) {
-      this.handleError(error, "Failed to compress with zstd");
+      this.handleError(error, 'Failed to compress with zstd');
     }
   }
 
@@ -181,14 +181,14 @@ export class CompressionService
       await this.ensureZstdInstalled();
 
       const args = [
-        "-d", // Decompress flag
-        "-f", // Force overwrite
+        '-d', // Decompress flag
+        '-f', // Force overwrite
         inputPath, // Input file
-        "-o", // Output flag
+        '-o', // Output flag
         outputPath, // Output file
       ];
 
-      const exitCode = await exec("zstd", args);
+      const exitCode = await exec('zstd', args);
 
       if (exitCode !== 0) {
         throw new Error(`zstd decompression failed with exit code ${exitCode}`);
@@ -196,7 +196,7 @@ export class CompressionService
 
       this.logger.info(`Zstd decompression completed`);
     } catch (error) {
-      this.handleError(error, "Failed to decompress with zstd");
+      this.handleError(error, 'Failed to decompress with zstd');
     }
   }
 
@@ -221,7 +221,7 @@ export class CompressionService
 
       this.logger.info(`Tar archive extracted successfully`);
     } catch (error) {
-      this.handleError(error, "Failed to extract tar archive");
+      this.handleError(error, 'Failed to extract tar archive');
     }
   }
 

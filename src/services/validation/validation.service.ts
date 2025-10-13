@@ -1,7 +1,10 @@
-import { BaseService } from '../base/base-service';
-import { IValidationService, ILogger } from '../base/interfaces';
+import { BaseService } from "../base/base-service";
+import { IValidationService, ILogger } from "../base/interfaces";
 
-export class ValidationService extends BaseService implements IValidationService {
+export class ValidationService
+  extends BaseService
+  implements IValidationService
+{
   constructor(logger: ILogger) {
     super(logger);
   }
@@ -14,11 +17,13 @@ export class ValidationService extends BaseService implements IValidationService
     this.ensureInitialized();
 
     if (!password) {
-      throw new Error('Encryption password is required');
+      throw new Error("Encryption password is required");
     }
 
     if (password.length < 8) {
-      throw new Error(`Encryption password must be at least 8 characters (got ${password.length})`);
+      throw new Error(
+        `Encryption password must be at least 8 characters (got ${password.length})`
+      );
     }
 
     // Check for forbidden characters
@@ -26,7 +31,7 @@ export class ValidationService extends BaseService implements IValidationService
     if (!allowedPattern.test(password)) {
       throw new Error(
         'Encryption password can only contain alphanumeric characters and the following special characters: !@#$%^&*(),.?":{}|<>. ' +
-        'Emojis, unicode characters, and other symbols are not allowed.'
+          "Emojis, unicode characters, and other symbols are not allowed."
       );
     }
 
@@ -37,19 +42,25 @@ export class ValidationService extends BaseService implements IValidationService
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
     if (!hasUppercase) {
-      throw new Error('Encryption password must contain at least one uppercase letter');
+      throw new Error(
+        "Encryption password must contain at least one uppercase letter"
+      );
     }
 
     if (!hasLowercase) {
-      throw new Error('Encryption password must contain at least one lowercase letter');
+      throw new Error(
+        "Encryption password must contain at least one lowercase letter"
+      );
     }
 
     if (!hasDigit) {
-      throw new Error('Encryption password must contain at least one digit');
+      throw new Error("Encryption password must contain at least one digit");
     }
 
     if (!hasSpecialChar) {
-      throw new Error('Encryption password must contain at least one special character (!@#$%^&*(),.?":{}|<>)');
+      throw new Error(
+        'Encryption password must contain at least one special character (!@#$%^&*(),.?":{}|<>)'
+      );
     }
   }
 
@@ -57,11 +68,21 @@ export class ValidationService extends BaseService implements IValidationService
     this.ensureInitialized();
 
     if (!action) {
-      throw new Error('Action type is required');
+      throw new Error("Action type is required");
     }
 
-    if (action !== 'backup' && action !== 'restore') {
+    if (action !== "backup" && action !== "restore") {
       throw new Error("Invalid action type. Must be 'backup' or 'restore'");
+    }
+  }
+  public validateEnpointPreference(endpoint_preference: string): void {
+    this.ensureInitialized();
+
+    if (
+      endpoint_preference !== "SINGLE" &&
+      endpoint_preference !== "MULTIPLE"
+    ) {
+      throw new Error("Invalid action type. Must be 'SINGLE' or 'MULTIPLE'");
     }
   }
 
@@ -69,26 +90,35 @@ export class ValidationService extends BaseService implements IValidationService
     this.ensureInitialized();
 
     if (!method) {
-      throw new Error('OTP delivery method is required');
+      throw new Error("OTP delivery method is required");
     }
 
-    if (method !== 'MAIL' && method !== 'AUTHENTICATOR') {
-      throw new Error("Invalid otp_delivery_method. Must be 'MAIL' or 'AUTHENTICATOR'");
+    if (method !== "MAIL" && method !== "AUTHENTICATOR") {
+      throw new Error(
+        "Invalid otp_delivery_method. Must be 'MAIL' or 'AUTHENTICATOR'"
+      );
     }
   }
 
-  public validateRestoreInputs(fileVersionId?: string, suspendActions?: boolean): void {
+  public validateRestoreInputs(
+    fileVersionId?: string,
+    suspendActions?: boolean
+  ): void {
     this.ensureInitialized();
 
     if (!fileVersionId) {
-      throw new Error("Input 'file_version_id' is required when action is 'restore'");
+      throw new Error(
+        "Input 'file_version_id' is required when action is 'restore'"
+      );
     }
 
     if (suspendActions === undefined) {
-      throw new Error("Input 'suspend_actions' is required when action is 'restore'");
+      throw new Error(
+        "Input 'suspend_actions' is required when action is 'restore'"
+      );
     }
 
-    if (typeof suspendActions !== 'boolean') {
+    if (typeof suspendActions !== "boolean") {
       throw new Error("Invalid suspend_actions. Must be 'true' or 'false'");
     }
   }
