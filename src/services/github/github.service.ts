@@ -248,11 +248,11 @@ export class GitHubService extends BaseService implements IGitHubService {
 
     try {
       this.logger.info("Fetching repository details for activation...");
-
+      this.logger.info(context.repo.owner);
       const uniqueId =
-        core.getInput("endpoint-preference", { required: false }) == "MULTIPLE"
-          ? `/${context.repo.owner}`
-          : `/${context.repo.owner}/${context.repo.repo}`;
+        core.getInput("endpoint-preference") == "MULTIPLE"
+          ? `${context.repo.owner}`
+          : `${context.repo.owner}/${context.repo.repo}`;
       const getOperatingSystem = (): "Linux" | "Windows" | "MacOS" => {
         const runnerOS = process.env.RUNNER_OS || "Linux";
         switch (runnerOS) {
