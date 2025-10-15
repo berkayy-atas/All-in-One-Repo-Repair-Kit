@@ -248,7 +248,6 @@ export class GitHubService extends BaseService implements IGitHubService {
 
     try {
       this.logger.info("Fetching repository details for activation...");
-      this.logger.info(context.repo.owner);
       const uniqueId =
         core.getInput("endpoint-preference") == "MULTIPLE"
           ? `${context.repo.owner}`
