@@ -107,17 +107,14 @@ export class ApiClientService extends BaseService implements IApiClient {
       const repoName = context.repo.repo;
       this.logger.info(`Managing endpoint tag for repository: ${repoName}`);
 
-      // 1. Fonksiyon: Tüm tag'leri listele ve kontrol et
       const existingTag = await this.findTagByName(repoName, token);
 
       if (!existingTag) {
-        // Tag yok - 3. ve 4. fonksiyonu çalıştır
         this.logger.info(`Tag '${repoName}' not found, creating new tag`);
         const newTag = await this.createEndpointTag(repoName, token);
         await this.addTagToEndpoint(endpointId, newTag.id, token);
         this.logger.info(`Tag '${repoName}' created and added to endpoint`);
       } else {
-        // Tag var - 2. fonksiyonu çalıştır
         this.logger.info(`Tag '${repoName}' found with ID: ${existingTag.id}`);
         const hasTag = await this.checkEndpointHasTag(
           endpointId,
@@ -128,19 +125,16 @@ export class ApiClientService extends BaseService implements IApiClient {
         if (hasTag) {
           this.logger.info(`Endpoint already has tag '${repoName}'`);
         } else {
-          // Endpoint'te tag yok - 4. fonksiyonu çalıştır
           this.logger.info(`Adding existing tag '${repoName}' to endpoint`);
           await this.addTagToEndpoint(endpointId, existingTag.id, token);
           this.logger.info(`Tag '${repoName}' added to endpoint`);
         }
       }
     } catch (error) {
-      // Tag yönetimi başarısız olsa bile backup işlemi devam etsin
       this.logger.warn(`Tag management failed: ${String(error)}`);
     }
   }
 
-  // 1. Fonksiyon: Tag'leri listele ve belirli bir tag'i bul
   private async findTagByName(
     tagName: string,
     token: string
@@ -151,7 +145,7 @@ export class ApiClientService extends BaseService implements IApiClient {
       const requestBody: EndpointTagListRequest = {
         pagination: {
           currentPage: 1,
-          maxRowsPerPage: 1000, // Tüm tag'leri almak için yüksek bir sayı
+          maxRowsPerPage: 1000,
         },
         gridCriterias: {
           sortModel: [
@@ -192,7 +186,6 @@ export class ApiClientService extends BaseService implements IApiClient {
     }
   }
 
-  // 2. Fonksiyon: Endpoint'te bu tag'in olup olmadığını kontrol et
   private async checkEndpointHasTag(
     endpointId: number,
     tagId: number,
@@ -201,11 +194,14 @@ export class ApiClientService extends BaseService implements IApiClient {
     try {
       this.logger.info(`Checking if endpoint ${endpointId} has tag ${tagId}`);
 
-      const response = await this.axiosInstance.get(`/endpoint/${endpointId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await this.axiosInstance.get(
+        `/endpoint/GetDetail/${endpointId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const apiResponse: ApiResponse<EndpointList> = response.data;
       if (!apiResponse.success) {
@@ -225,7 +221,6 @@ export class ApiClientService extends BaseService implements IApiClient {
     }
   }
 
-  // 3. Fonksiyon: Yeni tag oluştur
   private async createEndpointTag(
     tagName: string,
     token: string
@@ -235,7 +230,7 @@ export class ApiClientService extends BaseService implements IApiClient {
 
       const requestBody: EndpointTagInsertRequest = {
         name: tagName,
-        backgroundColor: "#435333",
+        backgroundColor: "#27b9ddff",
       };
 
       const response = await this.axiosInstance.post(
@@ -264,7 +259,6 @@ export class ApiClientService extends BaseService implements IApiClient {
     }
   }
 
-  // 4. Fonksiyon: Tag'i endpoint'e ekle
   private async addTagToEndpoint(
     endpointId: number,
     tagId: number,

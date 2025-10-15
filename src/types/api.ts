@@ -114,7 +114,7 @@ export interface EndpointListResponse {
 }
 export interface EndpointTagInsertRequest {
   name: string;
-  backgroundColor: "#435333";
+  backgroundColor: string;
 }
 export interface EndpointTagInsertResponse {
   endpointTags: null;
