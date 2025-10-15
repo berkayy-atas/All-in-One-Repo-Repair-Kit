@@ -231,7 +231,7 @@ export class ApiClientService extends BaseService implements IApiClient {
 
       const requestBody: EndpointTagInsertRequest = {
         name: tagName,
-        backgroundColor: "#27b9ddff",
+        backgroundColor: "#3cd8a7",
       };
 
       const response = await this.axiosInstance.post(
