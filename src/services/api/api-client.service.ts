@@ -194,14 +194,11 @@ export class ApiClientService extends BaseService implements IApiClient {
     try {
       this.logger.info(`Checking if endpoint ${endpointId} has tag ${tagId}`);
 
-      const response = await this.axiosInstance.get(
-        `/endpoint/GetDetail/${endpointId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await this.axiosInstance.get(`/endpoint/${endpointId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const apiResponse: ApiResponse<EndpointList> = response.data;
       if (!apiResponse.success) {
