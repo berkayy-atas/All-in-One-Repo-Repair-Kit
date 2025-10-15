@@ -274,7 +274,7 @@ export class GitHubService extends BaseService implements IGitHubService {
         ip: process.env.RUNNER_IP || "127.0.0.1",
         operatingSystem: getOperatingSystem(),
         endpointType: config.endpoint.endpointType,
-        endpointName: this.repo,
+        endpointName: uniqueId,
       };
 
       this.logger.info("Successfully fetched repository activation details.");
