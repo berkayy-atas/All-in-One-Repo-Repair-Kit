@@ -4,6 +4,25 @@ export interface ApiResponse<T = any> {
     message?: string;
     error?: string;
 }
+export interface SortModel {
+    propertyName: string;
+    order: "asc" | "desc";
+}
+export interface GridCriterias {
+    sortModel: SortModel[];
+}
+export interface Pagination {
+    currentPage: number;
+    maxRowsPerPage: number;
+}
+export interface PaginationData {
+    currentPage: number;
+    maxPage: number;
+    rowOffset: number;
+    maxRowsPerPage: number;
+    resultRowCount: number;
+    totalRowCount: number;
+}
 export interface AuthTokenRequest {
     activationCode: string;
     uniqueId: string;
@@ -12,9 +31,99 @@ export interface AuthTokenRequest {
     endpointType?: string;
     endpointName: string;
 }
+export interface EndpointTagListRequest {
+    pagination: Pagination;
+    gridCriterias: GridCriterias;
+}
+export interface EndpointListRequest {
+    pagination: Pagination;
+    gridCriterias: GridCriterias;
+}
+export interface EndpointTagList {
+    endpointTags: null;
+    id: number;
+    name: string;
+    backgroundColor: string;
+    tenantId: number;
+    createdUserId: number;
+    createdDate: string;
+    updatedUserId: null;
+    updatedDate: null;
+    recordId: string;
+}
+export interface EndpointList {
+    id: number;
+    uniqueId: string;
+    status: number;
+    tenantId: number;
+    endpointCode: string;
+    endpointName: string;
+    endpointStatus: number;
+    isActive: boolean;
+    lastConnectionDate: null;
+    ip: string;
+    long: string;
+    lat: string;
+    country: string;
+    city: string;
+    region: string;
+    timezone: string;
+    operatingSystem: string;
+    endpointType: string;
+    storageLimit: number;
+    tenantActivationCodeId: number;
+    userId: number;
+    riskValue: number;
+    groupId: number;
+    forceActivation: boolean;
+    user: null;
+    tenantActivationCode: null;
+    endpointGroup: null;
+    directories: null;
+    tags: any[];
+    backupSetting: null;
+    fileVersions: null;
+    fileCountLimit: number;
+    fileCount: number;
+    subFileCount: number;
+    fileLength: number;
+    subFileLength: number;
+    fileLengthLimit: number;
+    teamId: number;
+    friendlyId: string;
+    createdUserId: number;
+    createdDate: string;
+    updatedUserId: null;
+    updatedDate: null;
+    recordId: string;
+}
+export interface EndpointTagListResponse {
+    pagination: PaginationData;
+    list: EndpointTagList[];
+}
+export interface EndpointListResponse {
+    pagination: PaginationData;
+    list: EndpointList[];
+}
+export interface EndpointTagInsertRequest {
+    name: string;
+    backgroundColor: "#435333";
+}
+export interface EndpointTagInsertResponse {
+    endpointTags: null;
+    id: number;
+    name: string;
+    backgroundColor: string;
+    tenantId: number;
+    createdUserId: number;
+    createdDate: string;
+    updatedUserId: null;
+    updatedDate: null;
+    recordId: string;
+}
 export interface RepositoryActivationDetails {
     uniqueId: string;
-    operatingSystem: 'Linux' | 'Windows' | 'MacOS';
+    operatingSystem: "Linux" | "Windows" | "MacOS";
     endpointName: string;
     ip: string;
     endpointType: string;
@@ -39,7 +148,7 @@ export interface BackupUploadResponse {
     fileRecordId: string;
 }
 export interface OtpRequest {
-    Type: 'MAIL' | 'AUTHENTICATOR';
+    Type: "MAIL" | "AUTHENTICATOR";
     Source: string;
     OtpGenerationMode: string;
 }

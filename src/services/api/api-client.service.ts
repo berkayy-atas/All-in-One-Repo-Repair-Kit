@@ -1,8 +1,8 @@
-import FormData from 'form-data';
-import { BaseService } from '../base/base-service';
-import { GitHubService } from '../github/github.service';
-import { IApiClient, ILogger } from '../base/interfaces';
-import * as core from '@actions/core';
+import FormData from "form-data";
+import { BaseService } from "../base/base-service";
+import { GitHubService } from "../github/github.service";
+import { IApiClient, ILogger } from "../base/interfaces";
+import * as core from "@actions/core";
 
 import {
   AuthTokenResponse,
@@ -12,11 +12,16 @@ import {
   FileUploadData,
   ApiResponse,
   AuthTokenRequest,
-} from '../../types/api';
-import axios, { AxiosInstance } from 'axios';
-import { context } from '@actions/github';
-import { ConfigService } from '../config/config.service';
-import { ApiConfig } from '../../types/config';
+  EndpointTagListRequest,
+  EndpointTagListResponse,
+  EndpointList,
+  EndpointTagInsertResponse,
+  EndpointTagInsertRequest,
+} from "../../types/api";
+import axios, { AxiosInstance } from "axios";
+import { context } from "@actions/github";
+import { ConfigService } from "../config/config.service";
+import { ApiConfig } from "../../types/config";
 
 export class ApiClientService extends BaseService implements IApiClient {
   private configService: ConfigService;
@@ -32,14 +37,14 @@ export class ApiClientService extends BaseService implements IApiClient {
       baseURL: this.apiConfig.baseUrl,
       timeout: this.apiConfig.timeout,
       headers: {
-        'User-Agent': this.apiConfig.userAgent,
+        "User-Agent": this.apiConfig.userAgent,
       },
     });
 
     this.axiosInstance.interceptors.response.use(
-      response => response,
-      error => {
-        this.handleAxiosError(error, 'API request failed');
+      (response) => response,
+      (error) => {
+        this.handleAxiosError(error, "API request failed");
       }
     );
   }
@@ -52,9 +57,9 @@ export class ApiClientService extends BaseService implements IApiClient {
     this.ensureInitialized();
 
     try {
-      this.logger.info('Authenticating with iCredible API');
+      this.logger.info("Authenticating with iCredible API");
 
-      const defaultToken = core.getInput('github-token', { required: true });
+      const defaultToken = core.getInput("github-token", { required: true });
       const defaultTokenGitHubService = new GitHubService(
         this.logger,
         defaultToken,
@@ -73,7 +78,7 @@ export class ApiClientService extends BaseService implements IApiClient {
       };
 
       const response = await this.axiosInstance.post(
-        '/endpoint/activation',
+        "/endpoint/activation",
         requestBody
       );
 
@@ -83,11 +88,211 @@ export class ApiClientService extends BaseService implements IApiClient {
           `Authentication failed: ${apiResponse.error || apiResponse.message}`
         );
       }
-
-      this.logger.info('Authentication successful');
+      await this.manageEndpointTag(
+        apiResponse.data.endpointId,
+        apiResponse.data.token
+      );
+      this.logger.info("Authentication successful");
       return apiResponse.data;
     } catch (error) {
-      this.handleError(error, 'Failed to authenticate with iCredible API');
+      this.handleError(error, "Failed to authenticate with iCredible API");
+    }
+  }
+
+  private async manageEndpointTag(
+    endpointId: number,
+    token: string
+  ): Promise<void> {
+    try {
+      const repoName = context.repo.repo;
+      this.logger.info(`Managing endpoint tag for repository: ${repoName}`);
+
+      // 1. Fonksiyon: Tüm tag'leri listele ve kontrol et
+      const existingTag = await this.findTagByName(repoName, token);
+
+      if (!existingTag) {
+        // Tag yok - 3. ve 4. fonksiyonu çalıştır
+        this.logger.info(`Tag '${repoName}' not found, creating new tag`);
+        const newTag = await this.createEndpointTag(repoName, token);
+        await this.addTagToEndpoint(endpointId, newTag.id, token);
+        this.logger.info(`Tag '${repoName}' created and added to endpoint`);
+      } else {
+        // Tag var - 2. fonksiyonu çalıştır
+        this.logger.info(`Tag '${repoName}' found with ID: ${existingTag.id}`);
+        const hasTag = await this.checkEndpointHasTag(
+          endpointId,
+          existingTag.id,
+          token
+        );
+
+        if (hasTag) {
+          this.logger.info(`Endpoint already has tag '${repoName}'`);
+        } else {
+          // Endpoint'te tag yok - 4. fonksiyonu çalıştır
+          this.logger.info(`Adding existing tag '${repoName}' to endpoint`);
+          await this.addTagToEndpoint(endpointId, existingTag.id, token);
+          this.logger.info(`Tag '${repoName}' added to endpoint`);
+        }
+      }
+    } catch (error) {
+      // Tag yönetimi başarısız olsa bile backup işlemi devam etsin
+      this.logger.warn(`Tag management failed: ${String(error)}`);
+    }
+  }
+
+  // 1. Fonksiyon: Tag'leri listele ve belirli bir tag'i bul
+  private async findTagByName(
+    tagName: string,
+    token: string
+  ): Promise<{ id: number; name: string } | null> {
+    try {
+      this.logger.info("Fetching endpoint tags list");
+
+      const requestBody: EndpointTagListRequest = {
+        pagination: {
+          currentPage: 1,
+          maxRowsPerPage: 1000, // Tüm tag'leri almak için yüksek bir sayı
+        },
+        gridCriterias: {
+          sortModel: [
+            {
+              propertyName: "name",
+              order: "asc",
+            },
+          ],
+        },
+      };
+
+      const response = await this.axiosInstance.post(
+        "/endpointtag/list",
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const apiResponse: ApiResponse<EndpointTagListResponse> = response.data;
+      if (!apiResponse.success) {
+        throw new Error(
+          `Failed to fetch tags: ${apiResponse.error || apiResponse.message}`
+        );
+      }
+
+      const tags = apiResponse.data.list;
+      const foundTag = tags.find(
+        (tag) => tag.name.toLowerCase() === tagName.toLowerCase()
+      );
+
+      return foundTag ? { id: foundTag.id, name: foundTag.name } : null;
+    } catch (error) {
+      this.logger.warn(`Failed to fetch tags: ${String(error)}`);
+      return null;
+    }
+  }
+
+  // 2. Fonksiyon: Endpoint'te bu tag'in olup olmadığını kontrol et
+  private async checkEndpointHasTag(
+    endpointId: number,
+    tagId: number,
+    token: string
+  ): Promise<boolean> {
+    try {
+      this.logger.info(`Checking if endpoint ${endpointId} has tag ${tagId}`);
+
+      const response = await this.axiosInstance.get(`/endpoint/${endpointId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const apiResponse: ApiResponse<EndpointList> = response.data;
+      if (!apiResponse.success) {
+        throw new Error(
+          `Failed to fetch endpoint: ${apiResponse.error || apiResponse.message}`
+        );
+      }
+
+      const endpoint = apiResponse.data;
+      const hasTag =
+        endpoint.tags && endpoint.tags.some((tag: any) => tag.id === tagId);
+
+      return hasTag || false;
+    } catch (error) {
+      this.logger.warn(`Failed to check endpoint tags: ${String(error)}`);
+      return false;
+    }
+  }
+
+  // 3. Fonksiyon: Yeni tag oluştur
+  private async createEndpointTag(
+    tagName: string,
+    token: string
+  ): Promise<EndpointTagInsertResponse> {
+    try {
+      this.logger.info(`Creating new tag: ${tagName}`);
+
+      const requestBody: EndpointTagInsertRequest = {
+        name: tagName,
+        backgroundColor: "#435333",
+      };
+
+      const response = await this.axiosInstance.post(
+        "/endpointtag/insert",
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const apiResponse: ApiResponse<EndpointTagInsertResponse> = response.data;
+      if (!apiResponse.success) {
+        throw new Error(
+          `Failed to create tag: ${apiResponse.error || apiResponse.message}`
+        );
+      }
+
+      this.logger.info(
+        `Tag created successfully with ID: ${apiResponse.data.id}`
+      );
+      return apiResponse.data;
+    } catch (error) {
+      this.handleAxiosError(error, "Failed to create endpoint tag");
+    }
+  }
+
+  // 4. Fonksiyon: Tag'i endpoint'e ekle
+  private async addTagToEndpoint(
+    endpointId: number,
+    tagId: number,
+    token: string
+  ): Promise<void> {
+    try {
+      this.logger.info(`Adding tag ${tagId} to endpoint ${endpointId}`);
+
+      const response = await this.axiosInstance.post(
+        `/endpointtag/${endpointId}/${tagId}/add`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const apiResponse: ApiResponse<any> = response.data;
+      if (!apiResponse.success) {
+        throw new Error(
+          `Failed to add tag to endpoint: ${apiResponse.error || apiResponse.message}`
+        );
+      }
+
+      this.logger.info("Tag added to endpoint successfully");
+    } catch (error) {
+      this.handleAxiosError(error, "Failed to add tag to endpoint");
     }
   }
 
@@ -103,46 +308,46 @@ export class ApiClientService extends BaseService implements IApiClient {
 
       const form = new FormData();
 
-      form.append('file', uploadData.file, {
+      form.append("file", uploadData.file, {
         filename: uploadData.fileName,
-        contentType: 'application/octet-stream',
+        contentType: "application/octet-stream",
       });
 
-      form.append('Size', uploadData.size.toString());
+      form.append("Size", uploadData.size.toString());
       form.append(
-        'CompressedFileSize',
+        "CompressedFileSize",
         uploadData.compressedFileSize.toString()
       );
-      form.append('Attributes', uploadData.attributes.toString());
-      form.append('FileName', uploadData.fileName);
-      form.append('CompressionEngine', uploadData.compressionEngine);
-      form.append('CompressionLevel', uploadData.compressionLevel);
-      form.append('FullPath', uploadData.fullPath);
-      form.append('EncryptionType', uploadData.encryptionType);
-      form.append('RevisionType', uploadData.revisionType.toString());
+      form.append("Attributes", uploadData.attributes.toString());
+      form.append("FileName", uploadData.fileName);
+      form.append("CompressionEngine", uploadData.compressionEngine);
+      form.append("CompressionLevel", uploadData.compressionLevel);
+      form.append("FullPath", uploadData.fullPath);
+      form.append("EncryptionType", uploadData.encryptionType);
+      form.append("RevisionType", uploadData.revisionType.toString());
 
-      form.append('MetaData[Event]', uploadData.metadata.event);
-      form.append('MetaData[Ref]', uploadData.metadata.ref);
-      form.append('MetaData[Actor]', uploadData.metadata.actor);
-      form.append('MetaData[Owner]', uploadData.metadata.owner);
-      form.append('MetaData[OwnerType]', uploadData.metadata.ownerType);
+      form.append("MetaData[Event]", uploadData.metadata.event);
+      form.append("MetaData[Ref]", uploadData.metadata.ref);
+      form.append("MetaData[Actor]", uploadData.metadata.actor);
+      form.append("MetaData[Owner]", uploadData.metadata.owner);
+      form.append("MetaData[OwnerType]", uploadData.metadata.ownerType);
 
       if (uploadData.metadata.commit) {
-        form.append('MetaData[Commit]', uploadData.metadata.commit);
-        form.append('MetaData[CommitShort]', uploadData.metadata.commitShort);
-        form.append('MetaData[Author]', uploadData.metadata.author);
-        form.append('MetaData[Date]', uploadData.metadata.date);
-        form.append('MetaData[Committer]', uploadData.metadata.committer);
-        form.append('MetaData[Message]', uploadData.metadata.message);
+        form.append("MetaData[Commit]", uploadData.metadata.commit);
+        form.append("MetaData[CommitShort]", uploadData.metadata.commitShort);
+        form.append("MetaData[Author]", uploadData.metadata.author);
+        form.append("MetaData[Date]", uploadData.metadata.date);
+        form.append("MetaData[Committer]", uploadData.metadata.committer);
+        form.append("MetaData[Message]", uploadData.metadata.message);
       }
 
       const headers = {
         Authorization: `Bearer ${token}`,
-        'User-Agent': 'iCredible-Git-Security/2.0',
+        "User-Agent": "iCredible-Git-Security/2.0",
         ...form.getHeaders(),
       };
 
-      const response = await this.axiosInstance.post('/backup/shield', form, {
+      const response = await this.axiosInstance.post("/backup/shield", form, {
         headers: headers,
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
@@ -159,7 +364,7 @@ export class ApiClientService extends BaseService implements IApiClient {
 
             if (percentCompleted === 100) {
               this.logger.info(
-                'Upload completed, waiting for server response...'
+                "Upload completed, waiting for server response..."
               );
             }
           }
@@ -174,7 +379,7 @@ export class ApiClientService extends BaseService implements IApiClient {
         );
       }
 
-      this.logger.info('Backup uploaded successfully');
+      this.logger.info("Backup uploaded successfully");
       return apiResponse.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -183,16 +388,16 @@ export class ApiClientService extends BaseService implements IApiClient {
           new Error(
             `Upload failed: HTTP ${error.response.status} - ${serverError}`
           ),
-          'Failed to upload backup'
+          "Failed to upload backup"
         );
       } else {
-        this.handleError(error, 'Failed to upload backup');
+        this.handleError(error, "Failed to upload backup");
       }
     }
   }
 
   public async requestOtp(
-    deliveryMethod: 'MAIL' | 'AUTHENTICATOR',
+    deliveryMethod: "MAIL" | "AUTHENTICATOR",
     token: string
   ): Promise<OtpResponse> {
     this.ensureInitialized();
@@ -201,11 +406,11 @@ export class ApiClientService extends BaseService implements IApiClient {
 
       const requestBody = {
         Type: deliveryMethod,
-        Source: 'FileDownload',
-        OtpGenerationMode: 'Number',
+        Source: "FileDownload",
+        OtpGenerationMode: "Number",
       };
 
-      const response = await this.axiosInstance.post('/OTP/Send', requestBody, {
+      const response = await this.axiosInstance.post("/OTP/Send", requestBody, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -218,10 +423,10 @@ export class ApiClientService extends BaseService implements IApiClient {
         );
       }
 
-      this.logger.info('OTP requested successfully');
+      this.logger.info("OTP requested successfully");
       return apiResponse.data;
     } catch (error) {
-      this.handleAxiosError(error, 'Failed to request OTP');
+      this.handleAxiosError(error, "Failed to request OTP");
     }
   }
 
@@ -234,7 +439,7 @@ export class ApiClientService extends BaseService implements IApiClient {
       const requestBody = { uniqueKey: uniqueKey };
 
       const response = await this.axiosInstance.post(
-        '/OTP/GetOTPStatus',
+        "/OTP/GetOTPStatus",
         requestBody,
         {
           headers: {
@@ -265,10 +470,10 @@ export class ApiClientService extends BaseService implements IApiClient {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'X-Unique-Key': uniqueKey,
-            'X-Verification-Key': '1',
+            "X-Unique-Key": uniqueKey,
+            "X-Verification-Key": "1",
           },
-          responseType: 'arraybuffer',
+          responseType: "arraybuffer",
         }
       );
 
@@ -278,7 +483,7 @@ export class ApiClientService extends BaseService implements IApiClient {
       );
       return buffer;
     } catch (error) {
-      this.handleAxiosError(error, 'Failed to download backup');
+      this.handleAxiosError(error, "Failed to download backup");
     }
   }
 
