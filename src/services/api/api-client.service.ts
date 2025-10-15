@@ -194,11 +194,14 @@ export class ApiClientService extends BaseService implements IApiClient {
     try {
       this.logger.info(`Checking if endpoint ${endpointId} has tag ${tagId}`);
 
-      const response = await this.axiosInstance.get(`/endpoint/${endpointId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await this.axiosInstance.get(
+        `/Endpoint/GetDetail/${endpointId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const apiResponse: ApiResponse<EndpointList> = response.data;
       if (!apiResponse.success) {
@@ -208,8 +211,9 @@ export class ApiClientService extends BaseService implements IApiClient {
       }
 
       const endpoint = apiResponse.data;
-      const hasTag =
-        endpoint.tags && endpoint.tags.some((tag: any) => tag.id === tagId);
+      const hasTag = endpoint.tags.some(
+        (tag: any) => tag.tagId === tagId || tag.tag?.id === tagId
+      );
 
       return hasTag || false;
     } catch (error) {
